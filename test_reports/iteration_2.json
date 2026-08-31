@@ -1,0 +1,45 @@
+{
+  "summary": "Fase 2 (site público + captação de leads + CMS + LP + SEO + calculadora) testada end-to-end. Backend: 28/29 pytest passaram (1 skipped por ausência de imóvel de outro corretor nos seeds — validado manualmente à parte: corretor recebe 403 ao editar imóvel alheio). Frontend Playwright: todos os fluxos críticos aprovados — Home (busca avançada, destaques com badge, depoimentos CMS, carrossel com setas), catálogo (filtros, ordenação, toggle grade/lista, estado vazio), detalhe do imóvel (galeria com miniaturas clicáveis, mapa Leaflet com CÍRCULO + nota 'Localização aproximada', JSON-LD RealEstateListing, título dinâmico, lazer, vídeo), formulário de lead (botão desabilitado sem LGPD, habilitado após aceite, envio com sucesso), agendamento com campo data, blog público, LP publicada renderiza, calculadora SAC bate exatamente com valor esperado (R$ 4.444,44 primeira parcela para 400k/10%/360m), menu mobile drawer com textos, SEO (sitemap.xml + robots.txt), painel (botões novo imóvel/post/LP/salvar-config/round-robin presentes), configurações menciona CNAME/Cloudflare. RBAC do corretor confirmado (só vê próprios, 403 ao editar outros). Round-robin alterna entre corretores; quando desligado + corretor_padrao_id, novos leads vão para o padrão. LGPD obrigatória: POST /api/leads retorna 422 sem consentimento. LP rascunho retorna 404 público.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/imoveis/publico/{slug}", "issue": "Endpoint retorna 200 para imóveis com status='vendido' (usa $ne:'inativo'). Comportamento intencional (vendidos visíveis com selo), mas confirmar com regra de negócio — se não deveria expor vendidos publicamente, ajustar para status='ativo' apenas."},
+      {"endpoint": "GET /api/sitemap.xml", "issue": "Não define <lastmod> nem <changefreq>. Aceitável, mas Google recomenda para melhor crawling."},
+      {"endpoint": "POST /api/leads", "issue": "Rate-limit inexistente em endpoint público. Um atacante pode floodar leads e poluir CRM. Sugestão: rate-limit por IP (ex.: 20 req/hora) e/ou reCAPTCHA v3 na Fase 3."},
+      {"endpoint": "PUT /api/site/config", "issue": "Não retorna a configuração atualizada — apenas {mensagem}. Frontend precisa refazer GET /site/config/completa. UX: retornar o objeto para reduzir round-trip."},
+      {"endpoint": "_atribuir_corretor (routes_leads.py L43)", "issue": "$inc em round_robin_posicao é executado ANTES de checar round_robin_ativo. Consequência: quando o toggle está desligado, a posição continua incrementando a cada lead e, ao religar, o ciclo pode 'pular' um corretor. Impacto baixo (não afeta correção, só ordem), mas ideal condicional."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Detalhe do imóvel", "issues": ["Após envio bem-sucedido do lead, o formulário some e o link 'Política de Privacidade' desaparece com ele. Ideal manter o link visível na mensagem de sucesso para transparência LGPD."]},
+      {"screen": "Financiamento", "issues": ["Legenda 'Taxa de exemplo (as taxas reais dos bancos serão integradas em breve)' é ótima para expectativa. OK."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_fase2.py", "/app/backend/tests/backend_test.py", "/app/test_reports/pytest/fase2_results.xml"],
+  "action_items": [
+    "Confirmar regra: imóveis 'vendido' devem aparecer no detalhe público? Se não, mudar filtro em routes_imoveis.detalhe_imovel_publico para status='ativo'.",
+    "Adicionar rate-limit em POST /api/leads (público) — bucket por IP + email.",
+    "Refatorar _atribuir_corretor para só incrementar round_robin_posicao quando round_robin_ativo=True (evita 'pular' corretor ao religar toggle).",
+    "Retornar objeto completo em PUT /api/site/config para reduzir GET extra do painel.",
+    "Manter link 'Política de Privacidade' visível na mensagem de sucesso do FormularioLead."
+  ],
+  "critical_code_review_comments": [
+    "routes_imoveis.py: bom uso de _regex escapando input do usuário — sem risco de injeção. RBAC do corretor implementado corretamente (filtro por corretor_responsavel_id + 403 em PATCH).",
+    "routes_leads.py: round-robin atômico via find_one_and_update com $inc é correto e evita race condition. Porém $inc é feito ANTES de checar round_robin_ativo — deveria estar dentro do if para não incrementar em vão.",
+    "routes_site.py sitemap: base URL vem de FRONTEND_URL — se essa var não estiver setada, URLs viram apenas paths. FRONTEND_URL está no .env, ok.",
+    "models_site.py imovel_para_saida: quando publico=True e exibir_endereco_exato=False, oculta logradouro/número/complemento mas MANTÉM lat/lng exatos no retorno. O front deve garantir que só use raio aproximado — verificar MapaImovel.tsx. (Testado: mapa exibe círculo, ok, mas o dado bruto sai da API.)",
+    "routes_site.py PUT /site/config aceita 'corretor_padrao_id' sem validar se o usuário existe e é corretor ativo — pode gravar ObjectId órfão. Baixo risco (fallback pega corretor[0]) mas ideal validar.",
+    "server.py continua com on_event depreciado (herdado da Fase 1)."
+  ],
+  "updated_files": ["/app/backend/tests/test_fase2.py"],
+  "success_rate": {"backend": "100% (28/28 executados; 1 skip por dado de seed)", "frontend": "100% dos fluxos críticos"},
+  "test_credentials": "Mesmos da Fase 1. Body login usa 'senha'.",
+  "seed_data_creation": "Tests criam leads/imóveis/posts/LPs com prefixo TEST_ e removem no teardown. Também restauram round_robin_ativo=true e corretor_padrao_id=None ao final.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Fase 2 aprovada. Endpoints públicos: /api/imoveis/publico (com filtros), /api/imoveis/publico/{slug}, /api/imoveis/opcoes, /api/leads (LGPD obrigatória), /api/blog, /api/blog/{slug}, /api/lp/{slug}, /api/site/config, /api/calculadora/taxa, /api/sitemap.xml, /api/robots.txt. LP de teste 'cobertura-itaim-oferta' está publicada. Slug do imóvel 'apartamento-moderno-de-3-quartos-na-moema' existe. Coleção MongoDB de posts é 'posts' (não 'cms_posts'). Coleção de leads tem etapa_crm='Novo' por padrão. Endpoints mencionados na review request como '/api/imoveis/publico/admin-imoveis' e '/api/lp/admin-imoveis' NÃO existem no backend — parece typo da spec; o correto é GET /api/imoveis (painel) e GET /api/landing-pages (painel).",
+  "rca of the issue": "N/A — nenhum bloqueador encontrado. Apenas melhorias sugeridas nos action_items."
+}

@@ -7,6 +7,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Newspaper,
+  Rocket,
   Settings,
   Users,
 } from "lucide-react";
@@ -46,10 +48,12 @@ interface ItemMenu {
 
 const ITENS_MENU: ItemMenu[] = [
   { rotulo: "Visão Geral", icone: LayoutDashboard, caminho: "/painel", testid: "menu-visao-geral" },
+  { rotulo: "Imóveis", icone: Building2, caminho: "/painel/imoveis", testid: "menu-imoveis" },
   { rotulo: "Usuários", icone: Users, caminho: "/painel/usuarios", papeis: ["admin", "gestor"], testid: "menu-usuarios" },
-  { rotulo: "Imóveis", icone: Building2, emBreve: true, testid: "menu-imoveis" },
+  { rotulo: "Blog", icone: Newspaper, caminho: "/painel/blog", papeis: ["admin", "gestor"], testid: "menu-blog" },
+  { rotulo: "Landing Pages", icone: Rocket, caminho: "/painel/landing-pages", papeis: ["admin", "gestor"], testid: "menu-landing-pages" },
   { rotulo: "CRM / Leads", icone: KanbanSquare, emBreve: true, testid: "menu-crm" },
-  { rotulo: "Configurações", icone: Settings, emBreve: true, papeis: ["admin"], testid: "menu-configuracoes" },
+  { rotulo: "Configurações", icone: Settings, caminho: "/painel/configuracoes", papeis: ["admin", "gestor"], testid: "menu-configuracoes" },
 ];
 
 function AreaLogomarca() {

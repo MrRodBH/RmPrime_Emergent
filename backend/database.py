@@ -63,6 +63,8 @@ VALIDADORES = {
             "fotos": {"bsonType": ["array", "null"], "items": {"bsonType": "string"}},
             "videos": {"bsonType": ["array", "null"], "items": {"bsonType": "string"}},
             "status": {"enum": ["ativo", "inativo", "vendido"]},
+            "slug": {"bsonType": TEXTO_OU_NULO},
+            "destaque": {"bsonType": "bool"},
             "corretor_responsavel_id": {"bsonType": ID_OU_NULO},
             "criado_em": {"bsonType": "date"},
             "atualizado_em": {"bsonType": ["date", "null"]},
@@ -143,12 +145,29 @@ VALIDADORES = {
             "atualizado_em": {"bsonType": ["date", "null"]},
         },
     },
+    "posts": {
+        "bsonType": "object",
+        "required": ["titulo", "slug", "conteudo", "publicado", "criado_em"],
+        "properties": {
+            "titulo": {"bsonType": "string"},
+            "slug": {"bsonType": "string"},
+            "resumo": {"bsonType": TEXTO_OU_NULO},
+            "conteudo": {"bsonType": "string"},
+            "capa": {"bsonType": TEXTO_OU_NULO},
+            "publicado": {"bsonType": "bool"},
+            "criado_em": {"bsonType": "date"},
+        },
+    },
     "imobiliaria_config": {
         "bsonType": "object",
         "required": ["nome"],
         "properties": {
             "nome": {"bsonType": "string"},
             "logomarca": {"bsonType": TEXTO_OU_NULO},
+            "telefone": {"bsonType": TEXTO_OU_NULO},
+            "email_contato": {"bsonType": TEXTO_OU_NULO},
+            "endereco": {"bsonType": TEXTO_OU_NULO},
+            "corretor_padrao_id": {"bsonType": ID_OU_NULO},
             "redes_sociais": {"bsonType": ["object", "null"]},
             "emails_notificacao": {"bsonType": ["array", "null"], "items": {"bsonType": "string"}},
             "round_robin_ativo": {"bsonType": "bool"},
@@ -168,6 +187,9 @@ async def configurar_banco():
 
     await db.users.create_index("email", unique=True)
     await db.properties.create_index("status")
+    await db.properties.create_index("slug", unique=True, sparse=True)
+    await db.properties.create_index("destaque")
+    await db.posts.create_index("slug", unique=True)
     await db.properties.create_index("corretor_responsavel_id")
     await db.leads.create_index("corretor_atribuido_id")
     await db.leads.create_index("etapa_crm")
