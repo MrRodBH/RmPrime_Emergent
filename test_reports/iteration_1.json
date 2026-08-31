@@ -1,0 +1,38 @@
+{
+  "summary": "Fase 1 (auth + gestão de usuários + RBAC + MongoDB) testada end-to-end. 24/24 testes pytest passaram (login admin/gestor/corretor, /auth/me, refresh, logout, senha errada em PT-BR, RBAC 403 corretor, gestor não cria admin, CRUD usuários com verificação por GET, desativar/reativar, login desativado 403, forgot-password resposta genérica idêntica p/ e-mail cadastrado e não, reset-password token inválido 400, coleções MongoDB com $jsonSchema, índice único em users.email, hash bcrypt $2b$). 19/19 checagens Playwright passaram (login redir /painel, mensagem de erro PT-BR, persistência de sessão após reload, gestão de usuários — buscar/criar/editar/desativar/reativar via menu de ações com diálogo de confirmação, logout via menu do avatar, RBAC frontend: corretor sem menu 'Usuários' e /painel/usuarios redireciona para /painel, esqueci-senha confirmação genérica, redefinir com token inválido mostra erro em PT-BR, senhas diferentes -> 'As senhas não coincidem', gestor não vê opção 'Administrador' no select de papel).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/login", "issue": "Rate-limit identificador é IP+email. Como o backend está atrás de proxy/ingress, o request.client.host pode ser sempre o IP do cluster — todas as tentativas globais para o mesmo e-mail compartilham o mesmo bucket. Considerar usar X-Forwarded-For (com validação) para ampliar a granularidade."},
+      {"endpoint": "/api/auth/reset-password", "issue": "Ao invalidar o link, faz find_one_and_update marcando used=True antes de trocar a senha; se gerar_hash_senha falhar, o token já foi consumido. Baixo risco, mas ideal envolver em transação/rollback."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Login / Redefinir / Esqueci-senha", "issues": ["Placeholder de 'SUA LOGOMARCA' com moldura tracejada é intencional (área reservada para logo), porém em produção o cliente irá esperar substituição — deixar claro na doc/CMS para trocar o asset."]},
+      {"screen": "PainelLayout mobile", "issues": ["Sheet lateral no mobile tem o mesmo fundo escuro; boa consistência. Sem issues visíveis."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Nenhum bloqueador. Opcional: melhorar granularidade do rate-limit de login usando X-Forwarded-For (o proxy do Emergent envia esse header).",
+    "Opcional: cobrir CRUD do UsuarioDialog com data-testid em campo-papel exibindo 'opcao-papel-*' abertas por padrão para facilitar Playwright (já funcional)."
+  ],
+  "critical_code_review_comments": [
+    "server.py usa on_event('startup'/'shutdown'), que é depreciado no FastAPI moderno — migrar para lifespan context manager quando conveniente.",
+    "routes_auth.py define contagem de brute force por IP+email; atrás de ingress isso pode virar 'por email global'. Documentar ou usar X-Forwarded-For.",
+    "usuario_para_saida em models.py e uso duplicado em routes_users.py/routes_auth.py está consistente e não vaza _id ou senha_hash — OK.",
+    "database.py: bom uso de $jsonSchema, TTL em password_reset_tokens/password_reset_requests, índice único em token_hash. Considerar adicionar índice em users.role para consultas por papel quando a base crescer.",
+    "PainelLayout.tsx: menu 'Configurações' filtrado por papel admin ao mesmo tempo que 'emBreve' — OK. Verificar rota /painel/usuarios protegida em ProtectedRoute (confirmado por comportamento: corretor é redirecionado)."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% (19/19)"},
+  "test_credentials": "admin: rodolfovaz882@gmail.com / Admin@123 | gestor: gestor.teste@imobiliaria.com.br / Gestor@123 | corretor: corretor.teste@imobiliaria.com.br / Corretor@123. Body de login usa 'senha' (não 'password').",
+  "seed_data_creation": "Usuários de teste criados pelo pytest e Playwright removidos via cleanup mongodb. Seed do backend garante admin/gestor/corretor idempotentemente.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Fase 1 aprovada 100%. Próximas fases (Imóveis/Leads/CMS) ainda não implementadas — os itens 'Em breve' no menu são intencionais. Se for testar reset-password de ponta a ponta com o token real, seguir /app/auth_testing.md: setar FRONTEND_URL=http://localhost:3000, restart backend, extrair token do log e restaurar URL de produção. Cuidado com rate-limit de forgot-password (5/15min por email) — não repetir para o admin real.",
+  "rca of the issue": "N/A — nenhum bug encontrado."
+}

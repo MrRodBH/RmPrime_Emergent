@@ -1,0 +1,95 @@
+{
+  "project_name": "Premium Real Estate Broker Dashboard",
+  "theme": "light",
+  "language": "pt-BR",
+  "design_philosophy": "Archetype 5 (Luxury) mixed with Archetype 4 (Swiss/High-Contrast). The platform should feel premium, trustworthy, and highly functional. Emphasize crisp typography, stark contrasts (Dark Sidebar vs Light Content), and most critically: A GENEROUS AND PROMINENT LOGO SPACE.",
+  "typography": {
+    "headings": "Manrope",
+    "body": "DM Sans",
+    "notes": "Use strict tight tracking (`tracking-tight`) for large headings. No generic rounded fonts.",
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight text-stone-950",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900",
+      "h3": "text-xl font-medium text-stone-800",
+      "body": "text-base text-stone-600",
+      "small": "text-sm font-medium tracking-wide"
+    }
+  },
+  "colors": {
+    "background": "bg-stone-50",
+    "surface": "bg-white",
+    "sidebar": "bg-stone-950",
+    "primary": "bg-stone-900",
+    "primary_hover": "hover:bg-stone-800",
+    "primary_text": "text-white",
+    "border": "border-stone-200",
+    "sidebar_border": "border-stone-800",
+    "sidebar_text": "text-stone-300",
+    "sidebar_text_active": "text-white",
+    "status_active": "bg-emerald-100 text-emerald-800 border-emerald-200",
+    "status_inactive": "bg-stone-100 text-stone-600 border-stone-200",
+    "role_admin": "bg-purple-100 text-purple-800",
+    "role_manager": "bg-blue-100 text-blue-800",
+    "role_broker": "bg-orange-100 text-orange-800"
+  },
+  "logo_requirements": {
+    "CRITICAL_INSTRUCTION": "The user explicitly complained about small logos in the past. You MUST provide a large, well-padded container for the logo.",
+    "login_page": "Use a generous container: `h-24 w-auto` or larger. Example: `<div className=\"mb-8 flex items-center justify-center\"><div className=\"h-24 w-full max-w-[200px] bg-stone-200 rounded flex items-center justify-center text-stone-500 font-bold text-2xl\">LOGO IMOBILIÁRIA</div></div>`",
+    "sidebar": "Allocate a substantial header area. Example: `<div className=\"h-24 px-6 flex items-center border-b border-stone-800 mb-6\"><div className=\"h-12 w-full bg-stone-800 rounded flex items-center justify-center text-stone-300 font-bold text-xl\">LOGO</div></div>`"
+  },
+  "layouts": {
+    "login": "Split screen layout. Left side: Massive high-quality architectural image covering the entire half. Right side: Centered login form, massive logo at the top, elegant minimal inputs, large button (`h-12`).",
+    "dashboard_shell": "CSS Grid or Flex layout. Fixed Sidebar (`w-72 bg-stone-950`). Main content area (`flex-1 bg-stone-50`). Top header in main area for breadcrumbs and User Avatar/Menu.",
+    "user_management": "A clean, card-less Table view. Do not trap the table in a small card. Let the table span full width of its container with `border-y border-stone-200`. Use Shadcn Table. Include a Header section with 'Gestão de Usuários' and a 'Adicionar Usuário' button."
+  },
+  "component_instructions": {
+    "buttons": "Pill-shaped or slightly rounded (`rounded-md`). Large click targets (`h-10` or `h-12`). High contrast.",
+    "inputs": "Clean, `bg-white`, 1px solid border (`border-stone-300`), focus state must be `focus:ring-2 focus:ring-stone-900`. Use standard Shadcn Form setup.",
+    "modals": "Use Shadcn Dialog for the 'Criar/Editar Usuário' form. Ensure the dialog is wide enough (`max-w-2xl`) and has generous padding (`p-8`).",
+    "table": "Shadcn Table. Left align all text. Actions column on the right with a Shadcn DropdownMenu (Editar, Desativar).",
+    "avatar_menu": "Shadcn DropdownMenu triggered by Shadcn Avatar in the top right of the dashboard shell."
+  },
+  "required_shadcn_components": [
+    "Button",
+    "Input",
+    "Form",
+    "Table",
+    "Dialog",
+    "DropdownMenu",
+    "Avatar",
+    "Badge",
+    "Select"
+  ],
+  "visual_enhancers": {
+    "borders": "Use crisp 1px borders instead of heavy shadows to separate sections.",
+    "spacing": "Generous spacing. Use `p-8` or `p-12` in main content areas.",
+    "interactions": "All interactive elements (rows, buttons) must have subtle `transition-colors duration-200`."
+  },
+  "image_urls": {
+    "login_background": {
+      "url": "https://images.pexels.com/photos/15422346/pexels-photo-15422346.jpeg",
+      "description": "High-end modern luxury real estate exterior with overcast sky.",
+      "category": "login_hero"
+    },
+    "user_avatar_placeholder": {
+      "url": "https://images.unsplash.com/photo-1647580427155-0483906cb9de?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjByZWFsJTIwZXN0YXRlJTIwYnJva2VyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzg4MTkxNTk0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Professional real estate broker in suit.",
+      "category": "avatar"
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure all text meets minimum 4.5:1 contrast ratio. The dark sidebar with light text ensures excellent readability.",
+    "data_testids": "MANDATORY: Add `data-testid` to ALL interactive elements (e.g., `data-testid=\"login-email-input\"`, `data-testid=\"add-user-button\"`, `data-testid=\"user-role-select\"`)."
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You MUST use Brazilian Portuguese (pt-BR) for ALL text, labels, placeholders, and error messages.",
+    "Do NOT create generic centered layouts. Use intentional grid/flex spacing.",
+    "Do NOT apply universal transition (e.g., `transition: all`). Target specific properties.",
+    "Create depth through 1px borders and very subtle shadows, relying primarily on contrast.",
+    "Do NOT use placeholder.com or dummyimage. Use the provided Unsplash/Pexels URLs.",
+    "NEVER use emojis as icons. Use Lucide React icons.",
+    "Shadcn components have opinionated rules, customize them using Tailwind classes to match this Luxury/Swiss theme.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Focus heavily on the 'Logomarca' constraints. Ensure the logo area is distinct, large, and easily replaceable by the user in the future."
+  ]
+}
