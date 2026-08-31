@@ -1,0 +1,24 @@
+{
+  "summary": "Fase 5 (dashboard /painel com Recharts) testada end-to-end. 13/13 testes backend pytest passaram (shape, filtros de período 7/30/0, RBAC corretor/admin/gestor, corretor_id inválido → 422, coerência funil ↔ total, soma percentuais, sem-auth 401, movimento de etapa reflete no funil e em visitas.realizadas). UI validada com Playwright para admin e corretor: todos os data-testids presentes (pagina-dashboard, filtro-periodo, filtro-corretor, botao-atualizar-dashboard, atualizado-em, kpi-leads/conversao/visitas/propostas, grafico-leads-periodo/funil/visitas-propostas/comparativo-corretores, bloco-insights-ia com badge 'Fase 6'). Corretor NÃO vê filtro-corretor nem gráfico comparativo, e vê o card 'Sua posição no funil'. Texto 'Atualizado às HH:MM · os números se atualizam sozinhos a cada 30 segundos' presente. Troca de período (7 dias) e clique em Atualizar funcionam sem erro. Estado final do DB: 'Lead Um' e 'Lead Dois' ambos em etapa 'Novo' (restaurado pelo teardown do teste).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_fase5_dashboard.py",
+    "/app/test_reports/pytest/fase5_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes_dashboard.py: cálculo de 'visitas.agendadas' usa origem=='agendamento'. Isso conta apenas leads cuja origem original foi um agendamento pelo site — leads criados por outras origens que depois ganham data de visita não são contabilizados. Se a intenção era 'visitas agendadas no CRM', talvez precise de campo dedicado (ex.: proximo_agendamento) na Fase futura. Comportamento atual, porém, é consistente com o texto da UI ('agendadas pelo site').",
+    "routes_dashboard.py L34: to_list(10000) fixo. OK para MVP, mas colocar comentário/limite ou paginação para produção futura.",
+    "InicioPage.tsx L54 TooltipPadrao: usa payload[0]?.payload?.etapa || dataCurta(label). Para o gráfico visitas-propostas, o label é 'Visitas'/'Propostas' (não ISO), e dataCurta chama split('-') que não quebra, mas produz 'undefined/undefined' silenciosamente. Como já cai no ramo etapa/nome via payload, na prática não aparece — mas seria mais robusto verificar formato antes."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_fase5_dashboard.py"
+  ],
+  "success_rate": {"backend": "100% (13/13)", "frontend": "100%"},
+  "test_credentials": "admin rodolfovaz882@gmail.com/Admin@123; gestor gestor.teste@imobiliaria.com.br/Gestor@123; corretor corretor.teste@imobiliaria.com.br/Corretor@123 — todos funcionando",
+  "seed_data_creation": "Nenhum lead novo criado. Teste test_funil_reflete_movimento move Lead Um para Visita e restaura para Novo no finally. Estado final verificado: Lead Um e Lead Dois em 'Novo'.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Fase 5 aprovada. Bloco 'Insights de negócio com IA' é placeholder por design (implementação real na Fase 6). Testes reutilizáveis: /app/backend/tests/test_fase5_dashboard.py (13 casos). Rodar com REACT_APP_BACKEND_URL/MONGO_URL/DB_NAME no env."
+}

@@ -110,6 +110,19 @@ bcrypt.
   o mesmo corretor; SheetTitle sr-only no loading do drawer (a11y); colunas do Kanban
   minmax 220px.
 
+## Implementado (Fase 5 — 31/08/2026)
+- **Dashboard gerencial** (Visão Geral, /painel) com Recharts: volume de leads por dia
+  (AreaChart, dias zerados incluídos), funil por etapa (BarChart horizontal colorido),
+  visitas agendadas x realizadas e propostas enviadas x fechadas (BarChart agrupado),
+  4 KPIs, comparativo entre corretores (só admin/gestor).
+- **Filtros:** período (7/30/90 dias ou todo) e corretor (só admin/gestor).
+- **RBAC no endpoint** GET /api/dashboard/metricas: corretor forçado aos próprios
+  leads (corretor_id ignorado, por_corretor=null); admin/gestor consolidam e filtram.
+- **Tempo real:** auto-refresh a cada 30s + botão Atualizar + carimbo "Atualizado às".
+- **Bloco "Insights de negócio com IA"** reservado na tela (badge Fase 6, exemplo).
+- Testes: 13/13 backend + 100% frontend (iteration_5); tooltip do gráfico tornado
+  robusto a rótulos não-ISO e limite do MVP documentado no endpoint.
+
 ## Backlog priorizado
 - **P1:** Editor visual avançado de landing pages; upload de logomarca direto em
   Configurações (hoje via URL ou link de upload de imóvel).
