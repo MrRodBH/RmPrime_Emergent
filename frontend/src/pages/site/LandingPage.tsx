@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { useParams } from "react-router-dom";
 import { Bath, BedDouble, Car, Ruler } from "lucide-react";
 import { api } from "@/lib/api";
@@ -8,11 +8,24 @@ import { Logomarca } from "@/site/SiteLayout";
 import { formatarMoeda, rotuloFinalidade } from "@/lib/format";
 import type { Imovel } from "@/types";
 
+interface BlocoLp {
+  tipo: string;
+  ativo: boolean;
+}
+
 interface DadosLp {
   slug: string;
-  conteudo: { titulo?: string; subtitulo?: string; texto?: string; cor_destaque?: string };
+  conteudo: {
+    titulo?: string;
+    subtitulo?: string;
+    texto?: string;
+    cor_destaque?: string;
+    blocos?: BlocoLp[];
+  };
   imovel: Imovel;
 }
+
+const ORDEM_PADRAO = ["hero", "caracteristicas", "texto", "galeria", "formulario"];
 
 export default function LandingPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -26,7 +39,7 @@ export default function LandingPage() {
       .catch(() => setNaoEncontrada(true));
   }, [slug]);
 
-  const cor = dados?.conteudo.cor_destaque || "#1c1917";
+  const cor = dados?.conteudo.cor_destaque || "#b45309";
 
   useSeo({
     titulo: dados?.conteudo.titulo || dados?.imovel.titulo,
@@ -55,21 +68,19 @@ export default function LandingPage() {
 
   const { imovel, conteudo } = dados;
   const c = imovel.caracteristicas || {};
+  const blocosSalvos = conteudo.blocos;
+  const ordem = blocosSalvos && blocosSalvos.length
+    ? blocosSalvos.filter((b) => b.ativo).map((b) => b.tipo)
+    : ORDEM_PADRAO;
 
-  return (
-    <div className="min-h-screen bg-stone-950" data-testid="pagina-landing">
-      <header className="border-b border-stone-800">
-        <div className="mx-auto flex h-24 max-w-6xl items-center px-4 md:px-8">
-          <Logomarca escura />
-        </div>
-      </header>
-
-      <section className="relative">
+  function renderHero() {
+    return (
+      <section key="hero" className="relative">
         {imovel.fotos[0] ? (
           <img src={imovel.fotos[0]} alt={`Foto principal do imóvel ${imovel.titulo}`} className="absolute inset-0 h-full w-full object-cover opacity-40" />
         ) : null}
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
-          <p className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#d6d3d1" }}>
+          <p className="text-sm font-semibold uppercase tracking-widest text-stone-300">
             {imovel.tipo} · {rotuloFinalidade(imovel.finalidade)} · {imovel.endereco?.bairro}
           </p>
           <h1 className="mt-3 max-w-3xl font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl" data-testid="lp-titulo">
@@ -78,12 +89,6 @@ export default function LandingPage() {
           {conteudo.subtitulo ? (
             <p className="mt-4 max-w-2xl text-lg text-stone-300">{conteudo.subtitulo}</p>
           ) : null}
-          <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-stone-200">
-            {c.quartos ? <span className="flex items-center gap-2"><BedDouble className="h-5 w-5" /> {c.quartos} quartos</span> : null}
-            {c.banheiros ? <span className="flex items-center gap-2"><Bath className="h-5 w-5" /> {c.banheiros} banheiros</span> : null}
-            {c.vagas ? <span className="flex items-center gap-2"><Car className="h-5 w-5" /> {c.vagas} vagas</span> : null}
-            {c.area_m2 ? <span className="flex items-center gap-2"><Ruler className="h-5 w-5" /> {c.area_m2} m²</span> : null}
-          </div>
           <p className="mt-8 font-heading text-4xl font-bold text-white" data-testid="lp-preco">
             {formatarMoeda(imovel.preco)}
             {imovel.finalidade === "aluguel" ? <span className="text-lg font-medium text-stone-400">/mês</span> : null}
@@ -98,32 +103,53 @@ export default function LandingPage() {
           </a>
         </div>
       </section>
+    );
+  }
 
-      <section className="mx-auto grid max-w-6xl gap-12 px-4 py-16 md:px-8 lg:grid-cols-2">
-        <div>
-          {conteudo.texto ? (
-            <div className="space-y-3 text-lg leading-relaxed text-stone-300" data-testid="lp-texto">
-              {conteudo.texto.split("\n").filter(Boolean).map((p, i) => (
-                <p key={i}>{p}</p>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3 text-lg leading-relaxed text-stone-300">
-              {(imovel.descricao || "").split("\n").filter(Boolean).map((p, i) => (
-                <p key={i}>{p}</p>
-              ))}
-            </div>
-          )}
-          {imovel.fotos.length > 1 ? (
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              {imovel.fotos.slice(1, 5).map((foto, i) => (
-                <img key={i} src={foto} alt={`Foto ${i + 2} do imóvel ${imovel.titulo}`} className="h-40 w-full rounded-lg border border-stone-800 object-cover" loading="lazy" />
-              ))}
-            </div>
-          ) : null}
+  function renderCaracteristicas() {
+    return (
+      <section key="caracteristicas" className="border-y border-stone-800 bg-stone-900">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-x-10 gap-y-4 px-4 py-6 text-stone-200 md:px-8" data-testid="lp-caracteristicas">
+          {c.quartos ? <span className="flex items-center gap-2"><BedDouble className="h-5 w-5" /> {c.quartos} {c.quartos === 1 ? "quarto" : "quartos"}</span> : null}
+          {c.banheiros ? <span className="flex items-center gap-2"><Bath className="h-5 w-5" /> {c.banheiros} {c.banheiros === 1 ? "banheiro" : "banheiros"}</span> : null}
+          {c.vagas ? <span className="flex items-center gap-2"><Car className="h-5 w-5" /> {c.vagas} {c.vagas === 1 ? "vaga" : "vagas"}</span> : null}
+          {c.area_m2 ? <span className="flex items-center gap-2"><Ruler className="h-5 w-5" /> {c.area_m2} m²</span> : null}
         </div>
+      </section>
+    );
+  }
 
-        <div id="formulario-interesse" className="h-fit rounded-lg bg-white p-6 md:p-8 lg:sticky lg:top-8" data-testid="lp-formulario">
+  function renderTexto() {
+    const texto = conteudo.texto || imovel.descricao || "";
+    if (!texto) return null;
+    return (
+      <section key="texto" className="mx-auto max-w-3xl px-4 py-14 md:px-8">
+        <div className="space-y-3 text-lg leading-relaxed text-stone-300" data-testid="lp-texto">
+          {texto.split("\n").filter(Boolean).map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  function renderGaleria() {
+    if (imovel.fotos.length <= 1) return null;
+    return (
+      <section key="galeria" className="mx-auto max-w-6xl px-4 pb-14 md:px-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4" data-testid="lp-galeria">
+          {imovel.fotos.slice(1, 9).map((foto, i) => (
+            <img key={i} src={foto} alt={`Foto ${i + 2} do imóvel ${imovel.titulo}`} className="h-44 w-full rounded-lg border border-stone-800 object-cover" loading="lazy" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  function renderFormulario() {
+    return (
+      <section key="formulario" id="formulario-interesse" className="mx-auto max-w-6xl px-4 pb-16 md:px-8">
+        <div className="mx-auto max-w-xl rounded-lg bg-white p-6 md:p-8" data-testid="lp-formulario">
           <FormularioLead
             origem="landing_page"
             imovelId={imovel.id}
@@ -133,6 +159,26 @@ export default function LandingPage() {
           />
         </div>
       </section>
+    );
+  }
+
+  const RENDERIZADORES: Record<string, () => JSX.Element | null> = {
+    hero: renderHero,
+    caracteristicas: renderCaracteristicas,
+    texto: renderTexto,
+    galeria: renderGaleria,
+    formulario: renderFormulario,
+  };
+
+  return (
+    <div className="min-h-screen bg-stone-950" data-testid="pagina-landing">
+      <header className="border-b border-stone-800">
+        <div className="mx-auto flex h-24 items-center max-w-6xl px-4 md:px-8">
+          <Logomarca escura />
+        </div>
+      </header>
+
+      {ordem.map((tipo) => (RENDERIZADORES[tipo] ? RENDERIZADORES[tipo]() : null))}
 
       <footer className="border-t border-stone-800 py-8 text-center text-xs text-stone-500">
         Oferta sujeita a disponibilidade. Seus dados são tratados conforme a LGPD.

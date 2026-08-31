@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   Building2,
+  FileText,
   KanbanSquare,
   Landmark,
   LayoutDashboard,
@@ -51,6 +52,7 @@ const ITENS_MENU: ItemMenu[] = [
   { rotulo: "Imóveis", icone: Building2, caminho: "/painel/imoveis", testid: "menu-imoveis" },
   { rotulo: "Usuários", icone: Users, caminho: "/painel/usuarios", papeis: ["admin", "gestor"], testid: "menu-usuarios" },
   { rotulo: "Blog", icone: Newspaper, caminho: "/painel/blog", papeis: ["admin", "gestor"], testid: "menu-blog" },
+  { rotulo: "Conteúdo do Site", icone: FileText, caminho: "/painel/conteudo", papeis: ["admin", "gestor"], testid: "menu-conteudo" },
   { rotulo: "Landing Pages", icone: Rocket, caminho: "/painel/landing-pages", papeis: ["admin", "gestor"], testid: "menu-landing-pages" },
   { rotulo: "CRM / Leads", icone: KanbanSquare, emBreve: true, testid: "menu-crm" },
   { rotulo: "Configurações", icone: Settings, caminho: "/painel/configuracoes", papeis: ["admin", "gestor"], testid: "menu-configuracoes" },

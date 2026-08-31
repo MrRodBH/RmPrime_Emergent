@@ -1,0 +1,44 @@
+{
+  "summary": "Fase 3 (uploads, IA simulada, CMS ampliado com banner/menu/e-mails-notificação, Política de Privacidade editável, Landing Page por blocos, RBAC) testada end-to-end. Backend: 16/16 pytest passaram (test_fase3.py). Frontend Playwright: fluxos críticos aprovados — upload PNG via /api/uploads + download em /api/arquivos/*, upload sem auth 401, upload .txt 422, IA simulada retorna texto melhorado com {simulado:true}, IA texto curto/vazio 422; CMS admin edita banner_home_titulo/menu_imoveis e reflete em /api/site/config público; depoimentos formato 'Nome :: Texto' parseia como array; e-mails de notificação persistem como array em /api/site/config/completa; corretor recebe 403 em GET/PUT /site/config/completa; LP com blocos reordenáveis + toggles cria e serve na ordem pública correta (galeria desligada preservada com ativo:false); LP 'cobertura-itaim-oferta' segue renderizando. Frontend: /painel/imoveis Novo imóvel abre dialog com dropzone-fotos, uploader-fotos, botao-melhorar-ia (DISABLED sem texto → ENABLED após digitar, clique substitui texto pela versão simulada), input-url-foto + botao-adicionar-url-foto adicionam fotos à lista-fotos (2 items), preview do mapa aparece com lat/lng preenchidos (previa-mapa-imovel); /painel/conteudo carrega com cms-banner-titulo e botao-salvar-conteudo; /painel/landing-pages Nova LP mostra lp-blocos com todos os 5 tipos (lp-bloco-hero, lp-bloco-caracteristicas, lp-bloco-texto, lp-bloco-galeria, lp-bloco-formulario); RBAC: corretor NÃO vê link do menu 'Conteúdo do Site' e /painel/conteudo redireciona para /painel.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/uploads", "issue": "Import de ObjectId fica no fim do arquivo (linha 121, após uso na função). Funciona porque a função só é chamada em runtime, mas é frágil — mover import para o topo."},
+      {"endpoint": "POST /api/ia/melhorar-descricao", "issue": "Pydantic Field(min_length=10) rejeita textos curtos com 422 antes mesmo do handler. Contract OK, mas mensagem de erro do Pydantic é técnica ('String should have at least 10 characters'); considerar tradução via validator custom para UX PT-BR consistente com o resto do app."},
+      {"endpoint": "PUT /api/site/config", "issue": "Não valida formato de emails_notificacao — aceita strings quaisquer no array (ex.: 'nao-eh-email'). Ideal usar List[EmailStr] no ConfigSiteAtualizar."},
+      {"endpoint": "POST /api/landing-pages", "issue": "Não valida se ao menos um bloco 'formulario' está ativo (a validação está apenas no front). Backend aceita LP publicada sem bloco de formulário. Sugestão: validar server-side."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Editor LP", "issues": ["A validação de 'formulario obrigatório' fica escondida atrás de 'Selecione o imóvel' — se usuário só desligar formulario mas não escolher imóvel, o erro exibido é sobre imóvel. Considerar checar bloco formulario primeiro OU exibir ambos os erros."]},
+      {"screen": "CMS /painel/conteudo", "issues": ["Os campos de menu (menu_inicio etc.) aceitam vazio; o backend faz fallback para o padrão apenas na leitura pública — o próprio painel poderia mostrar placeholder 'Início' visualmente para deixar claro."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_fase3.py", "/app/test_reports/pytest/fase3_results.xml"],
+  "action_items": [
+    "Mover 'from bson import ObjectId' para o topo de routes_uploads.py.",
+    "Adicionar validação server-side no POST/PATCH /landing-pages: pelo menos 1 bloco tipo='formulario' com ativo=True (LGPD/geração de leads).",
+    "Trocar emails_notificacao: Optional[list[str]] por List[EmailStr] em ConfigSiteAtualizar para validar e-mails.",
+    "Tradução PT-BR das mensagens Pydantic (ex.: min_length em /api/ia/melhorar-descricao)."
+  ],
+  "critical_code_review_comments": [
+    "routes_uploads.py: import de ObjectId no fim do arquivo é anti-pattern. Também: dependência 'requests' (síncrona) dentro de async endpoint bloqueia o event loop — considerar httpx.AsyncClient para uploads/downloads.",
+    "routes_uploads.py: GET /api/arquivos/{caminho} é público (sem auth). Isso é intencional para o site público exibir fotos, mas qualquer um que descubra o caminho baixa. Aceitável para imagens de imóveis publicados, mas documentar.",
+    "routes_ia.py: implementação simulada bem sinalizada com {simulado:true, aviso:...}. Bom.",
+    "routes_site.py: PUT /site/config faz uma iteração de N updates await sequenciais em cms_content (uma chave por vez). Para 11 chaves CMS, são 11 round-trips. Poderia usar bulk_write para eficiência. Não crítico.",
+    "models_site.py ConfigSiteAtualizar: emails_notificacao é list[str] sem validação. Sugerido list[EmailStr].",
+    "ConteudoSitePage.tsx: envia o payload inteiro em PUT (incluindo campos vazios) — como o backend só grava quando valor is not None e strings vazias entram como valores válidos, a política/menu pode ser inadvertidamente esvaziada em cada save. Comportamento correto atualmente (usuário editou), mas verifique se o load inicial não sobrescreve com strings vazias por engano.",
+    "LandingPagesPainelPage.tsx: validação de bloco formulário obrigatório fica atrás da validação de imovel_id — reordenar checagens ou concatenar erros."
+  ],
+  "updated_files": ["/app/backend/tests/test_fase3.py"],
+  "success_rate": {"backend": "100% (16/16)", "frontend": "100% dos fluxos críticos da Fase 3"},
+  "test_credentials": "Mesmos: admin rodolfovaz882@gmail.com/Admin@123, gestor gestor.teste@imobiliaria.com.br/Gestor@123, corretor corretor.teste@imobiliaria.com.br/Corretor@123. Body login usa 'senha'.",
+  "seed_data_creation": "Nenhum dado permanente. teardown_module remove LPs test-lp-*, imóveis TEST_*, restaura banner_home_titulo/menu_imoveis vazios e round_robin_ativo=true. LP 'cobertura-itaim-oferta' preservada.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Fase 3 aprovada 100%. Endpoints novos: POST /api/uploads (auth, image/*, 10MB), GET /api/arquivos/{path} (público), POST /api/ia/melhorar-descricao (auth, min_length=10, retorno SIMULADO). Novas chaves CMS em /api/site/config e /api/site/config/completa: banner_home_titulo/subtitulo/imagem, menu_inicio/imoveis/blog/contato, emails_notificacao (array). LP conteudo.blocos = list[{tipo, ativo}]. LPs devem ter bloco 'formulario' ativo (validado apenas no front). Testids novos confirmados: dropzone-fotos, uploader-fotos, input-url-foto, botao-adicionar-url-foto, botao-melhorar-ia, previa-mapa-imovel, lp-blocos, lp-bloco-{tipo}, lp-bloco-ativo-{tipo}, cms-banner-titulo, botao-salvar-conteudo, cms-menu_imoveis. Menu sidebar do painel usa testid 'menu-conteudo' (não 'link-conteudo-site' — este é um link dentro de ConfiguracoesPage).",
+  "rca of the issue": "N/A — nenhum bloqueador. Apenas melhorias sugeridas (validações server-side e imports)."
+}

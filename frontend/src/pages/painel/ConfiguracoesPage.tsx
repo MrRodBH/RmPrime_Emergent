@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Cloud, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Cloud, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { api, erroApi } from "@/lib/api";
 import type { Usuario } from "@/contexts/AuthContext";
@@ -26,32 +27,28 @@ interface ConfigCompleta {
   telefone?: string | null;
   email_contato?: string | null;
   endereco?: string | null;
-  redes_sociais: Record<string, string>;
   round_robin_ativo: boolean;
   corretor_padrao_id?: string | null;
-  footer_texto: string;
-  footer_endereco: string;
-  politica_privacidade: string;
-  depoimentos: string;
+  emails_notificacao: string[];
 }
 
 export default function ConfiguracoesPage() {
   const [config, setConfig] = useState<ConfigCompleta | null>(null);
+  const [emailsTexto, setEmailsTexto] = useState("");
   const [corretores, setCorretores] = useState<Usuario[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    api.get("/site/config/completa").then((r) => setConfig(r.data)).catch((e) => toast.error(erroApi(e)));
+    api.get("/site/config/completa").then((r) => {
+      setConfig(r.data);
+      setEmailsTexto((r.data.emails_notificacao || []).join("\n"));
+    }).catch((e) => toast.error(erroApi(e)));
     api.get("/usuarios", { params: { papel: "corretor", ativo: true } }).then((r) => setCorretores(r.data)).catch(() => {});
   }, []);
 
   function set(campo: keyof ConfigCompleta, valor: unknown) {
     setConfig((c) => (c ? { ...c, [campo]: valor } : c));
-  }
-
-  function setRede(rede: string, valor: string) {
-    setConfig((c) => (c ? { ...c, redes_sociais: { ...c.redes_sociais, [rede]: valor } } : c));
   }
 
   async function aoSalvar(evento: FormEvent) {
@@ -61,11 +58,16 @@ export default function ConfiguracoesPage() {
     setSalvando(true);
     try {
       await api.put("/site/config", {
-        ...config,
+        nome: config.nome,
         logomarca: config.logomarca || null,
+        telefone: config.telefone || null,
+        email_contato: config.email_contato || null,
+        endereco: config.endereco || null,
+        round_robin_ativo: config.round_robin_ativo,
         corretor_padrao_id: config.corretor_padrao_id || null,
+        emails_notificacao: emailsTexto.split("\n").map((e) => e.trim()).filter(Boolean),
       });
-      toast.success("Configurações salvas. O site já reflete as mudanças.");
+      toast.success("Configurações salvas com sucesso.");
     } catch (e) {
       setErro(erroApi(e));
     } finally {
@@ -86,7 +88,18 @@ export default function ConfiguracoesPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-950 sm:text-4xl">Configurações</h1>
-          <p className="mt-1 text-stone-600">Identidade da imobiliária, textos do site e distribuição de leads.</p>
+          <p className="mt-1 max-w-2xl text-stone-600">
+            Dados da imobiliária, distribuição de leads e domínio das landing pages.
+            Para textos do site (banner, menu, rodapé, redes sociais e Política de Privacidade), use o menu{" "}
+            <Link to="/painel/conteudo" className="font-medium text-stone-900 underline underline-offset-2" data-testid="link-conteudo-site">
+              Conteúdo do Site
+            </Link>
+            . Para a equipe, use{" "}
+            <Link to="/painel/usuarios" className="font-medium text-stone-900 underline underline-offset-2" data-testid="link-gestao-usuarios">
+              Usuários
+            </Link>
+            .
+          </p>
         </div>
         <Button type="submit" disabled={salvando} className="h-11 bg-stone-900 text-white transition-colors duration-200 hover:bg-stone-800" data-testid="botao-salvar-config">
           {salvando ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>) : "Salvar tudo"}
@@ -102,11 +115,15 @@ export default function ConfiguracoesPage() {
             <div className="space-y-2">
               <Label htmlFor="cfg-nome">Nome da imobiliária</Label>
               <Input id="cfg-nome" value={config.nome} onChange={(e) => set("nome", e.target.value)} className="border-stone-300" data-testid="cfg-nome" />
+              <p className="text-xs text-stone-500">Aparece no cabeçalho, no rodapé e na aba do navegador.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="cfg-logomarca">URL da logomarca</Label>
-              <Input id="cfg-logomarca" type="url" placeholder="https://... (imagem PNG/SVG)" value={config.logomarca || ""} onChange={(e) => set("logomarca", e.target.value)} className="border-stone-300" data-testid="cfg-logomarca" />
-              <p className="text-xs text-stone-500">A logomarca aparece em destaque no topo do site, do painel e das landing pages.</p>
+              <Input id="cfg-logomarca" type="url" placeholder="https://... (imagem PNG ou SVG)" value={config.logomarca || ""} onChange={(e) => set("logomarca", e.target.value)} className="border-stone-300" data-testid="cfg-logomarca" />
+              <p className="text-xs text-stone-500">
+                Cole o link de uma imagem já hospedada, ou envie a imagem pelo cadastro de um imóvel e reutilize o link gerado.
+                A logomarca aparece em destaque no site, no painel e nas landing pages.
+              </p>
               {config.logomarca ? (
                 <div className="rounded-md border border-stone-200 bg-white p-4">
                   <img src={config.logomarca} alt="Pré-visualização da logomarca" className="h-14 w-auto object-contain" data-testid="cfg-logomarca-preview" />
@@ -127,90 +144,70 @@ export default function ConfiguracoesPage() {
               <Label htmlFor="cfg-endereco">Endereço da loja</Label>
               <Input id="cfg-endereco" value={config.endereco || ""} onChange={(e) => set("endereco", e.target.value)} className="border-stone-300" data-testid="cfg-endereco" />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="cfg-emails-notificacao">E-mails que recebem aviso de novo lead</Label>
+              <Textarea id="cfg-emails-notificacao" rows={3} placeholder={"um@email.com\noutro@email.com"} value={emailsTexto} onChange={(e) => setEmailsTexto(e.target.value)} className="border-stone-300" data-testid="cfg-emails-notificacao" />
+              <p className="text-xs text-stone-500">
+                Um e-mail por linha. Sempre que um visitante preencher um formulário do site, estas pessoas serão avisadas
+                (o envio de e-mails será ativado na fase de integrações).
+              </p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-stone-200">
-          <CardHeader>
-            <CardTitle className="font-heading text-lg">Redes sociais</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[
-              { rede: "instagram", rotulo: "Instagram (link do perfil)" },
-              { rede: "facebook", rotulo: "Facebook (link da página)" },
-              { rede: "youtube", rotulo: "YouTube (link do canal)" },
-              { rede: "whatsapp", rotulo: "WhatsApp (somente números, com DDD)" },
-            ].map((item) => (
-              <div key={item.rede} className="space-y-2">
-                <Label htmlFor={`cfg-${item.rede}`}>{item.rotulo}</Label>
-                <Input
-                  id={`cfg-${item.rede}`}
-                  value={config.redes_sociais[item.rede] || ""}
-                  onChange={(e) => setRede(item.rede, e.target.value)}
-                  className="border-stone-300"
-                  data-testid={`cfg-${item.rede}`}
-                />
+        <div className="space-y-6">
+          <Card className="border-stone-200">
+            <CardHeader>
+              <CardTitle className="font-heading text-lg">Distribuição de leads entre corretores</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-md border border-stone-200 bg-stone-50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-stone-900">Rodízio automático (round-robin)</p>
+                  <p className="text-xs text-stone-500">
+                    Ligado: cada novo lead vai para o próximo corretor ativo da fila, em ordem. Desligado: todos os leads
+                    vão para o usuário padrão escolhido abaixo.
+                  </p>
+                </div>
+                <Switch checked={config.round_robin_ativo} onCheckedChange={(v: boolean) => set("round_robin_ativo", v)} data-testid="cfg-round-robin" />
               </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-stone-200">
-          <CardHeader>
-            <CardTitle className="font-heading text-lg">Textos do site (CMS)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cfg-footer-texto">Texto institucional do rodapé</Label>
-              <Textarea id="cfg-footer-texto" rows={3} value={config.footer_texto} onChange={(e) => set("footer_texto", e.target.value)} className="border-stone-300" data-testid="cfg-footer-texto" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cfg-footer-endereco">Endereço exibido no rodapé</Label>
-              <Input id="cfg-footer-endereco" value={config.footer_endereco} onChange={(e) => set("footer_endereco", e.target.value)} className="border-stone-300" data-testid="cfg-footer-endereco" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cfg-depoimentos">Depoimentos da página inicial</Label>
-              <Textarea id="cfg-depoimentos" rows={4} value={config.depoimentos} onChange={(e) => set("depoimentos", e.target.value)} className="border-stone-300" data-testid="cfg-depoimentos" />
-              <p className="text-xs text-stone-500">Um depoimento por linha, no formato: Nome do cliente :: Texto do depoimento</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cfg-politica">Política de Privacidade (LGPD)</Label>
-              <Textarea id="cfg-politica" rows={8} value={config.politica_privacidade} onChange={(e) => set("politica_privacidade", e.target.value)} className="border-stone-300" data-testid="cfg-politica" />
-              <p className="text-xs text-stone-500">Exibida em /politica-de-privacidade e vinculada ao consentimento dos formulários.</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-stone-200">
-          <CardHeader>
-            <CardTitle className="font-heading text-lg">Distribuição de leads entre corretores</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-md border border-stone-200 bg-stone-50 px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-stone-900">Rodízio automático (round-robin)</p>
-                <p className="text-xs text-stone-500">
-                  Ligado: cada novo lead vai para o próximo corretor ativo da fila. Desligado: todos vão para o usuário padrão.
-                </p>
+              <div className="space-y-2">
+                <Label>Usuário padrão (quando o rodízio estiver desligado)</Label>
+                <Select value={config.corretor_padrao_id || ""} onValueChange={(v: string) => set("corretor_padrao_id", v === "nenhum" ? null : v)}>
+                  <SelectTrigger className="border-stone-300" data-testid="cfg-corretor-padrao">
+                    <SelectValue placeholder="Selecione um corretor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhum">Primeiro corretor ativo disponível</SelectItem>
+                    {corretores.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Switch checked={config.round_robin_ativo} onCheckedChange={(v: boolean) => set("round_robin_ativo", v)} data-testid="cfg-round-robin" />
-            </div>
-            <div className="space-y-2">
-              <Label>Usuário padrão (quando o rodízio estiver desligado)</Label>
-              <Select value={config.corretor_padrao_id || ""} onValueChange={(v: string) => set("corretor_padrao_id", v === "nenhum" ? null : v)}>
-                <SelectTrigger className="border-stone-300" data-testid="cfg-corretor-padrao">
-                  <SelectValue placeholder="Selecione um corretor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nenhum">Primeiro corretor ativo disponível</SelectItem>
-                  {corretores.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card className="border-stone-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-heading text-lg">
+                <Users className="h-5 w-5 text-stone-500" /> Equipe (corretores e gestores)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm leading-relaxed text-stone-700">
+              <p>
+                O cadastro, a edição e a desativação de corretores e gestores são feitos na tela{" "}
+                <strong>Usuários</strong>. Lá você define o papel de cada pessoa: Administrador (acesso total),
+                Gestor (quase tudo, sem configurações críticas) ou Corretor (apenas os próprios imóveis e leads).
+              </p>
+              <Link to="/painel/usuarios" data-testid="atalho-usuarios-config">
+                <Button type="button" variant="outline" className="mt-4 border-stone-300">
+                  Abrir gestão de usuários
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card className="border-stone-200" data-testid="card-dominio-lp">

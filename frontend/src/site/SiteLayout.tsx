@@ -4,12 +4,7 @@ import { Building2, Facebook, Instagram, Landmark, Mail, MapPin, Menu, Phone, Yo
 import { useSiteConfig } from "@/contexts/SiteConfigContext";
 import { Button, Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui-kit";
 
-const MENU = [
-  { rotulo: "Início", caminho: "/", testid: "menu-inicio" },
-  { rotulo: "Imóveis", caminho: "/imoveis", testid: "menu-imoveis" },
-  { rotulo: "Blog", caminho: "/blog", testid: "menu-blog" },
-  { rotulo: "Contato", caminho: "/contato", testid: "menu-contato" },
-];
+const MENU_DESCRICOES = "Navegue pelas seções do site para conhecer nossos imóveis, conteúdos e canais de atendimento.";
 
 export function Logomarca({ escura }: { escura?: boolean }) {
   const config = useSiteConfig();
@@ -40,6 +35,12 @@ export function SiteLayout() {
   const config = useSiteConfig();
   const [menuAberto, setMenuAberto] = useState(false);
   const redes = config.redes_sociais || {};
+  const menu = [
+    { rotulo: config.menu_inicio || "Início", caminho: "/", testid: "menu-inicio" },
+    { rotulo: config.menu_imoveis || "Imóveis", caminho: "/imoveis", testid: "menu-imoveis" },
+    { rotulo: config.menu_blog || "Blog", caminho: "/blog", testid: "menu-blog" },
+    { rotulo: config.menu_contato || "Contato", caminho: "/contato", testid: "menu-contato" },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
@@ -50,7 +51,7 @@ export function SiteLayout() {
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Navegação principal">
-            {MENU.map((item) => (
+            {menu.map((item) => (
               <NavLink
                 key={item.caminho}
                 to={item.caminho}
@@ -85,11 +86,9 @@ export function SiteLayout() {
               <div className="mb-6 mt-2">
                 <Logomarca />
               </div>
-              <p className="mb-4 text-sm text-stone-500">
-                Navegue pelas seções do site para conhecer nossos imóveis, conteúdos e canais de atendimento.
-              </p>
+              <p className="mb-4 text-sm text-stone-500">{MENU_DESCRICOES}</p>
               <nav className="flex flex-col gap-1" aria-label="Navegação móvel">
-                {MENU.map((item) => (
+                {menu.map((item) => (
                   <NavLink
                     key={item.caminho}
                     to={item.caminho}

@@ -74,6 +74,7 @@ export interface LandingPage {
     subtitulo?: string;
     texto?: string;
     cor_destaque?: string;
+    blocos?: { tipo: string; ativo: boolean }[];
   };
   publicada: boolean;
 }

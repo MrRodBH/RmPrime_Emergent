@@ -13,6 +13,13 @@ export interface SiteConfig {
   footer_endereco: string;
   politica_privacidade: string;
   depoimentos: Depoimento[];
+  banner_home_titulo: string;
+  banner_home_subtitulo: string;
+  banner_home_imagem: string;
+  menu_inicio: string;
+  menu_imoveis: string;
+  menu_blog: string;
+  menu_contato: string;
 }
 
 const CONFIG_VAZIA: SiteConfig = {
@@ -22,6 +29,13 @@ const CONFIG_VAZIA: SiteConfig = {
   footer_endereco: "",
   politica_privacidade: "",
   depoimentos: [],
+  banner_home_titulo: "",
+  banner_home_subtitulo: "",
+  banner_home_imagem: "",
+  menu_inicio: "Início",
+  menu_imoveis: "Imóveis",
+  menu_blog: "Blog",
+  menu_contato: "Contato",
 };
 
 const SiteConfigContexto = createContext<SiteConfig>(CONFIG_VAZIA);

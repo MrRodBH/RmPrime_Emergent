@@ -51,14 +51,15 @@ export default function HomePage() {
   return (
     <div data-testid="pagina-inicio-site">
       <section className="relative">
-        <img src={HERO} alt="Fachada de imóvel residencial moderno" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={config.banner_home_imagem || HERO} alt="Foto de destaque de um imóvel da imobiliária" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-stone-950/60" />
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-4 py-20 md:px-8 md:py-28">
           <h1 className="max-w-2xl font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            O imóvel certo para o seu próximo capítulo
+            {config.banner_home_titulo || "O imóvel certo para o seu próximo capítulo"}
           </h1>
           <p className="mt-4 max-w-xl text-lg text-stone-200">
-            Apartamentos, casas e coberturas selecionados por quem entende do mercado — com atendimento próximo do começo ao fim.
+            {config.banner_home_subtitulo ||
+              "Apartamentos, casas e coberturas selecionados por quem entende do mercado — com atendimento próximo do começo ao fim."}
           </p>
 
           <div className="mt-10 rounded-lg bg-white p-4 shadow-xl md:p-6" data-testid="busca-avancada">

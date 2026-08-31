@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { api, erroApi } from "@/lib/api";
 import { useAuth, type Usuario } from "@/contexts/AuthContext";
+import { FotosUploader } from "@/components/FotosUploader";
+import { MapaImovel } from "@/components/site/MapaImovel";
 import {
   Button,
   Dialog,
@@ -55,7 +57,6 @@ const FORM_VAZIO = {
   vagas: "",
   area_m2: "",
   lazerTexto: "",
-  fotosTexto: "",
   videosTexto: "",
   corretorId: "",
 };
@@ -69,8 +70,10 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
   const { usuario: logado } = useAuth();
   const editando = !!imovel;
   const [form, setForm] = useState(FORM_VAZIO);
+  const [fotos, setFotos] = useState<string[]>([]);
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [melhorando, setMelhorando] = useState(false);
   const [corretores, setCorretores] = useState<Usuario[]>([]);
 
   const podeAtribuir = !!logado && (logado.papel === "admin" || logado.papel === "gestor");
@@ -105,12 +108,13 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
         vagas: c.vagas ? String(c.vagas) : "",
         area_m2: c.area_m2 ? String(c.area_m2) : "",
         lazerTexto: (imovel.lazer || []).join(", "),
-        fotosTexto: (imovel.fotos || []).join("\n"),
         videosTexto: (imovel.videos || []).join("\n"),
         corretorId: imovel.corretor_responsavel_id || "",
       });
+      setFotos(imovel.fotos || []);
     } else {
       setForm(FORM_VAZIO);
+      setFotos([]);
     }
     setErro("");
   }, [aberto, imovel]);
@@ -125,6 +129,20 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
 
   function set(campo: keyof typeof FORM_VAZIO, valor: string | boolean) {
     setForm((f) => ({ ...f, [campo]: valor }));
+  }
+
+  async function melhorarComIA() {
+    if (!form.descricao.trim()) return;
+    setMelhorando(true);
+    try {
+      const { data } = await api.post("/ia/melhorar-descricao", { texto: form.descricao });
+      set("descricao", data.texto_melhorado);
+      toast.success("Descrição aprimorada! (Demonstração — a IA real será conectada na Fase 6.)");
+    } catch (e) {
+      toast.error(erroApi(e));
+    } finally {
+      setMelhorando(false);
+    }
   }
 
   async function aoEnviar(evento: FormEvent) {
@@ -164,7 +182,7 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
         area_m2: numeroOuNulo(form.area_m2),
       },
       lazer: form.lazerTexto.split(",").map((s) => s.trim()).filter(Boolean),
-      fotos: form.fotosTexto.split("\n").map((s) => s.trim()).filter(Boolean),
+      fotos,
       videos: form.videosTexto.split("\n").map((s) => s.trim()).filter(Boolean),
     };
     if (podeAtribuir && form.corretorId) corpo.corretor_responsavel_id = form.corretorId;
@@ -187,6 +205,9 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
     }
   }
 
+  const latNum = numeroOuNulo(form.lat);
+  const lngNum = numeroOuNulo(form.lng);
+
   return (
     <Dialog open={aberto} onOpenChange={(v: boolean) => !v && aoFechar()}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto p-8" data-testid="dialog-imovel">
@@ -195,7 +216,7 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
             {editando ? "Editar imóvel" : "Novo imóvel"}
           </DialogTitle>
           <DialogDescription>
-            As fotos são exibidas na ordem em que aparecem na lista (uma URL por linha).
+            Preencha os campos abaixo. Os textos de ajuda explicam cada seção — não é preciso conhecimento técnico.
           </DialogDescription>
         </DialogHeader>
 
@@ -206,6 +227,7 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="imovel-titulo">Título do anúncio</Label>
                 <Input id="imovel-titulo" required placeholder="Ex.: Apartamento de 3 quartos na Moema" value={form.titulo} onChange={(e) => set("titulo", e.target.value)} className="border-stone-300" data-testid="imovel-titulo" />
+                <p className="text-xs text-stone-500">É o texto que aparece em destaque no site e no Google.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="imovel-tipo">Tipo</Label>
@@ -265,15 +287,37 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
               <div className="flex items-center justify-between rounded-md border border-stone-200 bg-stone-50 px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-stone-900">Exibir endereço exato</p>
-                  <p className="text-xs text-stone-500">Se desligado, o mapa mostra apenas a região do bairro.</p>
+                  <p className="text-xs text-stone-500">Desligado: o mapa mostra apenas a região do bairro.</p>
                 </div>
                 <Switch checked={form.exibir_endereco_exato} onCheckedChange={(v: boolean) => set("exibir_endereco_exato", v)} data-testid="imovel-endereco-exato" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="imovel-descricao">Descrição</Label>
-              <Textarea id="imovel-descricao" rows={4} placeholder="Descreva os diferenciais do imóvel..." value={form.descricao} onChange={(e) => set("descricao", e.target.value)} className="border-stone-300" data-testid="imovel-descricao" />
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="imovel-descricao">Descrição</Label>
+                <button
+                  type="button"
+                  onClick={melhorarComIA}
+                  disabled={!form.descricao.trim() || melhorando}
+                  title={form.descricao.trim() ? "Reescrever e aprimorar o texto digitado" : "Digite um texto na descrição para habilitar este botão"}
+                  data-testid="botao-melhorar-ia"
+                  className="flex items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 transition-colors duration-200 hover:border-stone-500 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {melhorando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  Melhorar com IA
+                </button>
+              </div>
+              <Textarea id="imovel-descricao" rows={4} placeholder="Descreva os diferenciais do imóvel com suas palavras..." value={form.descricao} onChange={(e) => set("descricao", e.target.value)} className="border-stone-300" data-testid="imovel-descricao" />
+              <p className="text-xs text-stone-500">
+                Escreva primeiro um rascunho com as suas palavras. Depois, se quiser, use o botão "Melhorar com IA"
+                para deixar o texto mais atrativo — ele só funciona quando já existe texto no campo.
+              </p>
             </div>
+          </section>
+
+          <section className="space-y-4">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-stone-500">Fotos do imóvel</h3>
+            <FotosUploader valor={fotos} onChange={setFotos} />
           </section>
 
           <section className="space-y-4">
@@ -313,8 +357,15 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
               </div>
             </div>
             <p className="text-xs text-stone-500">
-              Dica: encontre as coordenadas pesquisando o endereço no Google Maps e clicando com o botão direito no ponto desejado.
+              Como descobrir as coordenadas: pesquise o endereço no Google Maps, clique com o botão direito no ponto do
+              imóvel e clique nos números que aparecem para copiá-los.
             </p>
+            {latNum !== null && lngNum !== null ? (
+              <div data-testid="previa-mapa-imovel">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">Pré-visualização do mapa (como aparece no site)</p>
+                <MapaImovel lat={latNum} lng={lngNum} exato={form.exibir_endereco_exato} titulo={form.titulo || "este imóvel"} />
+              </div>
+            ) : null}
           </section>
 
           <section className="space-y-4">
@@ -344,14 +395,11 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
           </section>
 
           <section className="space-y-4">
-            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-stone-500">Mídia e responsável</h3>
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-stone-500">Vídeos e responsável</h3>
             <div className="space-y-2">
-              <Label htmlFor="imovel-fotos">Fotos (uma URL por linha, na ordem de exibição)</Label>
-              <Textarea id="imovel-fotos" rows={4} placeholder={"https://exemplo.com/foto1.jpg\nhttps://exemplo.com/foto2.jpg"} value={form.fotosTexto} onChange={(e) => set("fotosTexto", e.target.value)} className="border-stone-300 font-mono text-xs" data-testid="imovel-fotos" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="imovel-videos">Vídeos (uma URL por linha — YouTube ou arquivo de vídeo)</Label>
+              <Label htmlFor="imovel-videos">Vídeos (uma URL por linha — link do YouTube ou arquivo de vídeo)</Label>
               <Textarea id="imovel-videos" rows={2} placeholder="https://www.youtube.com/watch?v=..." value={form.videosTexto} onChange={(e) => set("videosTexto", e.target.value)} className="border-stone-300 font-mono text-xs" data-testid="imovel-videos" />
+              <p className="text-xs text-stone-500">Cole o link normal do YouTube — o site converte automaticamente para o player.</p>
             </div>
             {podeAtribuir ? (
               <div className="space-y-2">
@@ -367,6 +415,7 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-stone-500">É quem aparece como contato do anúncio e recebe os leads deste imóvel no rodízio.</p>
               </div>
             ) : (
               <p className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-500">

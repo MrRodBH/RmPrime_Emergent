@@ -12,6 +12,7 @@ import InicioPage from "@/pages/InicioPage";
 import UsuariosPage from "@/pages/UsuariosPage";
 import ImoveisPainelPage from "@/pages/painel/ImoveisPainelPage";
 import BlogPainelPage from "@/pages/painel/BlogPainelPage";
+import ConteudoSitePage from "@/pages/painel/ConteudoSitePage";
 import LandingPagesPainelPage from "@/pages/painel/LandingPagesPainelPage";
 import ConfiguracoesPage from "@/pages/painel/ConfiguracoesPage";
 import HomePage from "@/pages/site/HomePage";
@@ -67,6 +68,14 @@ export default function App() {
                 element={
                   <ProtectedRoute papeis={["admin", "gestor"]}>
                     <BlogPainelPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="conteudo"
+                element={
+                  <ProtectedRoute papeis={["admin", "gestor"]}>
+                    <ConteudoSitePage />
                   </ProtectedRoute>
                 }
               />

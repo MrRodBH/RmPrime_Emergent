@@ -64,6 +64,28 @@ bcrypt.
   retorna a config atualizada; link da Política de Privacidade mantido na mensagem de
   sucesso do formulário de lead.
 
+## Implementado (Fase 3 — 31/08/2026)
+- **Upload de fotos com object storage Emergent**: POST /api/uploads (auth, imagens até
+  10 MB) + GET /api/arquivos/{path} público com cache; componente FotosUploader com
+  drag-and-drop, múltiplos arquivos, reordenação (setas + arrastar) e remoção; URL manual
+  como alternativa. Primeira foto = capa.
+- **"Melhorar com IA"** na descrição do imóvel: botão DESABILITADO enquanto o campo está
+  vazio; chama POST /api/ia/melhorar-descricao — **SIMULADO** (retorno de exemplo) até a
+  Fase 6, sinalizado com {simulado: true}.
+- **Preview do mapa** no formulário de imóvel, respeitando exibir_endereco_exato.
+- **Construtor de LP por blocos configuráveis** (hero, características, texto, galeria,
+  formulário) com toggles e reordenação; validação front + backend: bloco de formulário
+  obrigatório; LP pública renderiza na ordem configurada.
+- **CMS (/painel/conteudo)**: banner da home (título/subtítulo/imagem com preview),
+  itens de menu, rodapé, redes sociais, depoimentos ("Nome :: Texto"), Política de
+  Privacidade — tudo sem código, refletindo no site via GET /api/site/config.
+- **Configurações**: logomarca com preview, e-mails de notificação (array validado com
+  EmailStr), round-robin, atalho para gestão de usuários, guia Cloudflare.
+- Textos de ajuda descritivos para leigos em todos os formulários do painel.
+- Hardening pós-testes (iteration_3, 16/16 backend + fluxos frontend aprovados):
+  validação server-side do bloco de formulário em LPs, EmailStr em emails_notificacao,
+  mensagens 422 em PT-BR, import de ObjectId no topo.
+
 ## Backlog priorizado
 - **P0 (Fase 3):** CRM Kanban de leads com etapas, activities, gestão dos leads
   recebidos; filtro backend por `corretor_atribuido_id` para role=corretor.

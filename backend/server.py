@@ -11,9 +11,11 @@ from starlette.middleware.cors import CORSMiddleware
 
 from database import client, configurar_banco, db
 from routes_auth import router as auth_router
+from routes_ia import router as ia_router
 from routes_imoveis import router as imoveis_router
 from routes_leads import router as leads_router
 from routes_site import router as site_router
+from routes_uploads import router as uploads_router
 from routes_users import router as usuarios_router
 from security import gerar_hash_senha, verificar_senha
 from seeds import semear_site
@@ -29,6 +31,8 @@ api_router.include_router(usuarios_router)
 api_router.include_router(imoveis_router)
 api_router.include_router(leads_router)
 api_router.include_router(site_router)
+api_router.include_router(uploads_router)
+api_router.include_router(ia_router)
 
 
 @api_router.get("/")
@@ -85,6 +89,13 @@ async def iniciar():
     await configurar_banco()
     await semear_usuarios()
     await semear_site()
+    try:
+        from routes_uploads import init_storage
+
+        init_storage()
+        logger.info("Object storage inicializado.")
+    except Exception as erro:
+        logger.error("Falha ao inicializar object storage: %s", erro)
 
 
 @app.on_event("shutdown")

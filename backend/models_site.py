@@ -96,6 +96,7 @@ class ConteudoLandingPage(BaseModel):
     subtitulo: Optional[str] = None
     texto: Optional[str] = None
     cor_destaque: Optional[str] = None
+    blocos: Optional[list[dict]] = None
 
 
 class LandingPageCriar(BaseModel):
@@ -127,6 +128,14 @@ class ConfigSiteAtualizar(BaseModel):
     footer_endereco: Optional[str] = None
     politica_privacidade: Optional[str] = None
     depoimentos: Optional[str] = None
+    banner_home_titulo: Optional[str] = None
+    banner_home_subtitulo: Optional[str] = None
+    banner_home_imagem: Optional[str] = None
+    menu_inicio: Optional[str] = None
+    menu_imoveis: Optional[str] = None
+    menu_blog: Optional[str] = None
+    menu_contato: Optional[str] = None
+    emails_notificacao: Optional[list[EmailStr]] = None
 
 
 def imovel_para_saida(doc: dict, publico: bool = False) -> dict:

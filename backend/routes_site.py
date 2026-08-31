@@ -28,7 +28,26 @@ router = APIRouter(tags=["site"])
 
 admin_ou_gestor = exigir_papeis("admin", "gestor")
 
-CHAVES_CMS = ["footer_texto", "footer_endereco", "politica_privacidade", "depoimentos"]
+
+def _blocos_tem_formulario(conteudo: Optional[dict]) -> bool:
+    blocos = (conteudo or {}).get("blocos")
+    if not blocos:
+        return True
+    return any(b.get("tipo") == "formulario" and b.get("ativo") for b in blocos)
+
+CHAVES_CMS = [
+    "footer_texto",
+    "footer_endereco",
+    "politica_privacidade",
+    "depoimentos",
+    "banner_home_titulo",
+    "banner_home_subtitulo",
+    "banner_home_imagem",
+    "menu_inicio",
+    "menu_imoveis",
+    "menu_blog",
+    "menu_contato",
+]
 
 
 async def _valor_cms(chave: str, padrao: str = "") -> str:
@@ -71,6 +90,13 @@ async def config_publica():
         "footer_endereco": await _valor_cms("footer_endereco"),
         "politica_privacidade": await _valor_cms("politica_privacidade"),
         "depoimentos": depoimentos,
+        "banner_home_titulo": await _valor_cms("banner_home_titulo"),
+        "banner_home_subtitulo": await _valor_cms("banner_home_subtitulo"),
+        "banner_home_imagem": await _valor_cms("banner_home_imagem"),
+        "menu_inicio": await _valor_cms("menu_inicio", "Início"),
+        "menu_imoveis": await _valor_cms("menu_imoveis", "Imóveis"),
+        "menu_blog": await _valor_cms("menu_blog", "Blog"),
+        "menu_contato": await _valor_cms("menu_contato", "Contato"),
     }
 
 
@@ -89,6 +115,14 @@ async def _config_completa_dict() -> dict:
         "footer_endereco": await _valor_cms("footer_endereco"),
         "politica_privacidade": await _valor_cms("politica_privacidade"),
         "depoimentos": await _valor_cms("depoimentos"),
+        "banner_home_titulo": await _valor_cms("banner_home_titulo"),
+        "banner_home_subtitulo": await _valor_cms("banner_home_subtitulo"),
+        "banner_home_imagem": await _valor_cms("banner_home_imagem"),
+        "menu_inicio": await _valor_cms("menu_inicio", "Início"),
+        "menu_imoveis": await _valor_cms("menu_imoveis", "Imóveis"),
+        "menu_blog": await _valor_cms("menu_blog", "Blog"),
+        "menu_contato": await _valor_cms("menu_contato", "Contato"),
+        "emails_notificacao": config.get("emails_notificacao") or [],
     }
 
 
@@ -100,7 +134,7 @@ async def config_completa(atual: dict = Depends(admin_ou_gestor)):
 @router.put("/site/config")
 async def salvar_config(dados: ConfigSiteAtualizar, atual: dict = Depends(admin_ou_gestor)):
     await obter_config()
-    campos_config = ["nome", "logomarca", "telefone", "email_contato", "endereco", "redes_sociais", "round_robin_ativo", "corretor_padrao_id"]
+    campos_config = ["nome", "logomarca", "telefone", "email_contato", "endereco", "redes_sociais", "round_robin_ativo", "corretor_padrao_id", "emails_notificacao"]
     alteracoes: dict = {}
     for campo in campos_config:
         valor = getattr(dados, campo)
@@ -238,6 +272,11 @@ async def criar_lp(dados: LandingPageCriar, atual: dict = Depends(admin_ou_gesto
         "conteudo": dados.conteudo.model_dump(exclude_none=True),
         "publicada": dados.publicada,
     }
+    if not _blocos_tem_formulario(doc["conteudo"]):
+        raise HTTPException(
+            status_code=422,
+            detail="A página precisa manter o bloco de formulário ativo — é ele que transforma visitantes em leads.",
+        )
     resultado = await db.landing_pages.insert_one(doc)
     doc["_id"] = resultado.inserted_id
     return {"id": str(resultado.inserted_id), "slug": slug, "publicada": dados.publicada}
@@ -267,6 +306,11 @@ async def atualizar_lp(lp_id: str, dados: LandingPageAtualizar, atual: dict = De
             raise HTTPException(status_code=404, detail="Imóvel não encontrado.")
         alteracoes["imovel_id"] = imovel["_id"]
     if alteracoes:
+        if "conteudo" in alteracoes and not _blocos_tem_formulario(alteracoes["conteudo"]):
+            raise HTTPException(
+                status_code=422,
+                detail="A página precisa manter o bloco de formulário ativo — é ele que transforma visitantes em leads.",
+            )
         await db.landing_pages.update_one({"_id": alvo["_id"]}, {"$set": alteracoes})
     return {"mensagem": "Landing page atualizada com sucesso."}
 
