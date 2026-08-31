@@ -123,6 +123,7 @@ async def _config_completa_dict() -> dict:
         "menu_blog": await _valor_cms("menu_blog", "Blog"),
         "menu_contato": await _valor_cms("menu_contato", "Contato"),
         "emails_notificacao": config.get("emails_notificacao") or [],
+        "motivos_descarte": config.get("motivos_descarte") or [],
     }
 
 
@@ -134,7 +135,7 @@ async def config_completa(atual: dict = Depends(admin_ou_gestor)):
 @router.put("/site/config")
 async def salvar_config(dados: ConfigSiteAtualizar, atual: dict = Depends(admin_ou_gestor)):
     await obter_config()
-    campos_config = ["nome", "logomarca", "telefone", "email_contato", "endereco", "redes_sociais", "round_robin_ativo", "corretor_padrao_id", "emails_notificacao"]
+    campos_config = ["nome", "logomarca", "telefone", "email_contato", "endereco", "redes_sociais", "round_robin_ativo", "corretor_padrao_id", "emails_notificacao", "motivos_descarte"]
     alteracoes: dict = {}
     for campo in campos_config:
         valor = getattr(dados, campo)

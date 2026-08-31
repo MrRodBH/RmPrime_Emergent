@@ -86,20 +86,45 @@ bcrypt.
   validação server-side do bloco de formulário em LPs, EmailStr em emails_notificacao,
   mensagens 422 em PT-BR, import de ObjectId no topo.
 
+## Implementado (Fase 4 — 31/08/2026)
+- **CRM Kanban** (/painel/crm): 7 etapas (Novo, Conversando, Visita, Proposta,
+  Negócio Fechado — enum migrado de "Fechado", Perdido, Descartado), drag-and-drop
+  nativo com atualização otimista, contadores, busca server-side, cards acessíveis
+  por teclado (Enter abre o drawer).
+- **Descarte com motivo obrigatório** de lista configurável
+  (imobiliaria_config.motivos_descarte, editável em Configurações); validação no
+  backend (422 sem motivo ou motivo fora da lista).
+- **RBAC no CRM**: GET/PATCH de leads filtrado por corretor_atribuido_id quando
+  role=corretor (403 para lead alheio, verificado); reatribuição só admin/gestor.
+- **E-mail via Resend (proxy Emergent)**: envio ao corretor responsável + e-mails de
+  notificação configurados na criação do lead e na reatribuição; gate de segurança
+  (_assert_safe_email) em todo envio; NÃO bloqueia o fluxo (erro vira log).
+- **Drawer do lead**: abas Resumo (contato, imóvel, reatribuir), Atividades
+  (timeline cronológica + registro manual de anotação/ligação/e-mail) e Insights de
+  IA (painel preparado, exemplo de layout — IA real na Fase 6).
+- Link direto para o card: /painel/crm?lead={id} (usado no e-mail).
+- Hardening pós-testes (iteration_4, 26/26 backend + fluxos frontend aprovados):
+  404 uniforme para corretor em lead alheio (anti-enumeração de IDs); mensagens 422
+  em PT-BR na criação de atividades; refetch dos motivos de descarte ao abrir o
+  diálogo; diálogo de descarte só fecha em sucesso; toast neutro ao reatribuir para
+  o mesmo corretor; SheetTitle sr-only no loading do drawer (a11y); colunas do Kanban
+  minmax 220px.
+
 ## Backlog priorizado
-- **P0 (Fase 3):** CRM Kanban de leads com etapas, activities, gestão dos leads
-  recebidos; filtro backend por `corretor_atribuido_id` para role=corretor.
-- **P1:** Editor visual avançado de landing pages, upload de mídia (object storage)
-  para fotos de imóveis e logomarca.
-- **P1:** Integrações de marketing (Meta Pixel/CAPI, Google Ads) e Resend.
-- **P2 (Fase 6):** IA via Universal LLM Key (recomendação no carrossel, descrições,
-  respostas a leads), scraping real das taxas dos 4 bancos (CEF/Itaú/Bradesco/Inter),
-  dashboards com Recharts, domínio customizado efetivo de landing pages.
+- **P1:** Editor visual avançado de landing pages; upload de logomarca direto em
+  Configurações (hoje via URL ou link de upload de imóvel).
+- **P1:** Integrações de marketing (Meta Pixel/CAPI, Google Ads) e dashboards com
+  Recharts (leads por etapa, origem, corretor).
+- **P1:** Auditoria de falhas de e-mail (gravar activity quando envio falhar).
+- **P2 (Fase 6):** IA real via Universal LLM Key (insights/sentimento no card do lead,
+  melhoria de descrição, recomendação no carrossel), scraping real das taxas dos
+  4 bancos (CEF/Itaú/Bradesco/Inter).
 
 ## Próximas tarefas
-1. CRM Kanban: GET /api/leads (com filtro por papel), PATCH etapa, activities.
-2. Upload de imagens para fotos de imóveis e logomarca (object storage).
-3. Substituir placeholder "SUA LOGOMARCA" pelo asset real em Configurações.
+1. Dashboard com Recharts (funil, origem dos leads, produtividade por corretor).
+2. Integrações de marketing: Meta Pixel/CAPI e Google Ads (marketing_config).
+3. Fase 6: IA (insights de lead, melhoria de descrição, recomendações) e scraping
+   de bank_rates.
 
 ## Observações
 - Placeholder "SUA LOGOMARCA" (login/sidebar) é área intencional para o asset real —

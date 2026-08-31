@@ -30,11 +30,13 @@ interface ConfigCompleta {
   round_robin_ativo: boolean;
   corretor_padrao_id?: string | null;
   emails_notificacao: string[];
+  motivos_descarte: string[];
 }
 
 export default function ConfiguracoesPage() {
   const [config, setConfig] = useState<ConfigCompleta | null>(null);
   const [emailsTexto, setEmailsTexto] = useState("");
+  const [motivosTexto, setMotivosTexto] = useState("");
   const [corretores, setCorretores] = useState<Usuario[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
@@ -43,6 +45,7 @@ export default function ConfiguracoesPage() {
     api.get("/site/config/completa").then((r) => {
       setConfig(r.data);
       setEmailsTexto((r.data.emails_notificacao || []).join("\n"));
+      setMotivosTexto((r.data.motivos_descarte || []).join("\n"));
     }).catch((e) => toast.error(erroApi(e)));
     api.get("/usuarios", { params: { papel: "corretor", ativo: true } }).then((r) => setCorretores(r.data)).catch(() => {});
   }, []);
@@ -66,6 +69,7 @@ export default function ConfiguracoesPage() {
         round_robin_ativo: config.round_robin_ativo,
         corretor_padrao_id: config.corretor_padrao_id || null,
         emails_notificacao: emailsTexto.split("\n").map((e) => e.trim()).filter(Boolean),
+        motivos_descarte: motivosTexto.split("\n").map((m) => m.trim()).filter(Boolean),
       });
       toast.success("Configurações salvas com sucesso.");
     } catch (e) {
@@ -185,6 +189,20 @@ export default function ConfiguracoesPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-stone-200">
+            <CardHeader>
+              <CardTitle className="font-heading text-lg">Motivos de descarte de leads</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label htmlFor="cfg-motivos-descarte">Um motivo por linha</Label>
+              <Textarea id="cfg-motivos-descarte" rows={5} value={motivosTexto} onChange={(e) => setMotivosTexto(e.target.value)} className="border-stone-300" data-testid="cfg-motivos-descarte" />
+              <p className="text-xs text-stone-500">
+                Quando um corretor mover um lead para a etapa "Descartado" no CRM, ele precisará escolher um motivo
+                desta lista. Exemplos: Sem interesse, Sem resposta, Fora do perfil, Duplicado.
+              </p>
             </CardContent>
           </Card>
 

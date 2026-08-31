@@ -63,6 +63,35 @@ export interface Depoimento {
   texto: string;
 }
 
+export interface Lead {
+  id: string;
+  nome: string;
+  telefone: string;
+  email?: string | null;
+  origem: "site" | "landing_page" | "agendamento";
+  imovel_id?: string | null;
+  imovel_titulo?: string | null;
+  imovel_slug?: string | null;
+  mensagem?: string | null;
+  corretor_atribuido_id?: string | null;
+  corretor_nome?: string | null;
+  etapa_crm: string;
+  motivo_descarte?: string | null;
+  consentimento_em?: string | null;
+  criado_em?: string;
+  atividades?: Atividade[];
+}
+
+export interface Atividade {
+  id: string;
+  lead_id: string;
+  tipo: string;
+  descricao: string;
+  autor_id?: string | null;
+  autor_nome?: string | null;
+  data?: string;
+}
+
 export interface LandingPage {
   id: string;
   slug: string;

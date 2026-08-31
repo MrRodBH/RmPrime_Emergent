@@ -54,7 +54,7 @@ const ITENS_MENU: ItemMenu[] = [
   { rotulo: "Blog", icone: Newspaper, caminho: "/painel/blog", papeis: ["admin", "gestor"], testid: "menu-blog" },
   { rotulo: "Conteúdo do Site", icone: FileText, caminho: "/painel/conteudo", papeis: ["admin", "gestor"], testid: "menu-conteudo" },
   { rotulo: "Landing Pages", icone: Rocket, caminho: "/painel/landing-pages", papeis: ["admin", "gestor"], testid: "menu-landing-pages" },
-  { rotulo: "CRM / Leads", icone: KanbanSquare, emBreve: true, testid: "menu-crm" },
+  { rotulo: "CRM / Leads", icone: KanbanSquare, caminho: "/painel/crm", testid: "menu-crm" },
   { rotulo: "Configurações", icone: Settings, caminho: "/painel/configuracoes", papeis: ["admin", "gestor"], testid: "menu-configuracoes" },
 ];
 

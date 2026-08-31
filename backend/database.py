@@ -84,7 +84,7 @@ VALIDADORES = {
             "consentimento_em": {"bsonType": ["date", "null"]},
             "corretor_atribuido_id": {"bsonType": ID_OU_NULO},
             "etapa_crm": {
-                "enum": ["Novo", "Conversando", "Visita", "Proposta", "Fechado", "Perdido", "Descartado"]
+                "enum": ["Novo", "Conversando", "Visita", "Proposta", "Negócio Fechado", "Perdido", "Descartado"]
             },
             "motivo_descarte": {"bsonType": TEXTO_OU_NULO},
             "criado_em": {"bsonType": "date"},
@@ -172,6 +172,7 @@ VALIDADORES = {
             "emails_notificacao": {"bsonType": ["array", "null"], "items": {"bsonType": "string"}},
             "round_robin_ativo": {"bsonType": "bool"},
             "round_robin_posicao": {"bsonType": ["int", "long", "null"]},
+            "motivos_descarte": {"bsonType": ["array", "null"], "items": {"bsonType": "string"}},
         },
     },
 }

@@ -51,6 +51,7 @@ import {
 import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from "@/components/ui/card";
 import { Textarea as _Textarea } from "@/components/ui/textarea";
 import { Sheet as _Sheet, SheetContent as _SheetContent, SheetTitle as _SheetTitle, SheetTrigger as _SheetTrigger } from "@/components/ui/sheet";
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from "@/components/ui/tabs";
 import { Toaster as _Toaster } from "@/components/ui/sonner";
 
 const tipar = (c: unknown) => c as ComponentType<any>;
@@ -103,4 +104,8 @@ export const Sheet = _Sheet as any;
 export const SheetContent = tipar(_SheetContent);
 export const SheetTitle = tipar(_SheetTitle);
 export const SheetTrigger = tipar(_SheetTrigger);
+export const Tabs = _Tabs as any;
+export const TabsContent = tipar(_TabsContent);
+export const TabsList = tipar(_TabsList);
+export const TabsTrigger = tipar(_TabsTrigger);
 export const Toaster = tipar(_Toaster);

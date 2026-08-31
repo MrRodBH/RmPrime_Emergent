@@ -1,10 +1,12 @@
+import os
 from datetime import datetime, timedelta, timezone
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from database import db
+from email_service import enviar_email_novo_lead
 from models_site import LeadCriar
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -31,6 +33,7 @@ async def _config_imobiliaria() -> dict:
                 "round_robin_ativo": True,
                 "round_robin_posicao": -1,
                 "corretor_padrao_id": None,
+                "motivos_descarte": ["Sem interesse", "Sem resposta", "Fora do perfil", "Duplicado", "Dados inválidos"],
             }
         )
         config = await db.imobiliaria_config.find_one({})
@@ -69,7 +72,7 @@ async def _atribuir_corretor() -> ObjectId | None:
 
 
 @router.post("", status_code=201)
-async def criar_lead(dados: LeadCriar, request: Request):
+async def criar_lead(dados: LeadCriar, request: Request, tarefas: BackgroundTasks):
     if not dados.consentimento_lgpd:
         raise HTTPException(
             status_code=422,
@@ -133,6 +136,20 @@ async def criar_lead(dados: LeadCriar, request: Request):
             "data": agora,
         }
     )
+
+    config = await _config_imobiliaria()
+    destinatarios = []
+    if corretor_id:
+        corretor = await db.users.find_one({"_id": corretor_id}, {"email": 1})
+        if corretor and corretor.get("email"):
+            destinatarios.append(corretor["email"])
+    for extra in config.get("emails_notificacao") or []:
+        if extra not in destinatarios:
+            destinatarios.append(extra)
+    if destinatarios:
+        link = f"{os.environ.get('FRONTEND_URL', '').rstrip('/')}/painel/crm?lead={resultado.inserted_id}"
+        tarefas.add_task(enviar_email_novo_lead, destinatarios, doc, imovel_titulo, link)
+
     return {
         "mensagem": "Recebemos seu contato! Em breve um de nossos corretores falará com você."
     }

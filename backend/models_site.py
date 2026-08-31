@@ -136,6 +136,52 @@ class ConfigSiteAtualizar(BaseModel):
     menu_blog: Optional[str] = None
     menu_contato: Optional[str] = None
     emails_notificacao: Optional[list[EmailStr]] = None
+    motivos_descarte: Optional[list[str]] = None
+
+
+class EtapaLeadAtualizar(BaseModel):
+    etapa: Literal["Novo", "Conversando", "Visita", "Proposta", "Negócio Fechado", "Perdido", "Descartado"]
+    motivo_descarte: Optional[str] = None
+
+
+class AtribuirLeadEntrada(BaseModel):
+    corretor_id: str
+
+
+class AtividadeCriar(BaseModel):
+    tipo: Literal["anotacao", "ligacao", "email"]
+    descricao: str = Field(max_length=2000)
+
+
+ETAPAS_CRM = ["Novo", "Conversando", "Visita", "Proposta", "Negócio Fechado", "Perdido", "Descartado"]
+
+
+def lead_para_saida(doc: dict) -> dict:
+    return {
+        "id": str(doc["_id"]),
+        "nome": doc["nome"],
+        "telefone": doc["telefone"],
+        "email": doc.get("email"),
+        "origem": doc["origem"],
+        "imovel_id": str(doc["imovel_id"]) if doc.get("imovel_id") else None,
+        "mensagem": doc.get("mensagem"),
+        "corretor_atribuido_id": str(doc["corretor_atribuido_id"]) if doc.get("corretor_atribuido_id") else None,
+        "etapa_crm": doc["etapa_crm"],
+        "motivo_descarte": doc.get("motivo_descarte"),
+        "consentimento_em": doc.get("consentimento_em"),
+        "criado_em": doc.get("criado_em"),
+    }
+
+
+def atividade_para_saida(doc: dict) -> dict:
+    return {
+        "id": str(doc["_id"]),
+        "lead_id": str(doc["lead_id"]),
+        "tipo": doc["tipo"],
+        "descricao": doc["descricao"],
+        "autor_id": str(doc["autor_id"]) if doc.get("autor_id") else None,
+        "data": doc.get("data"),
+    }
 
 
 def imovel_para_saida(doc: dict, publico: bool = False) -> dict:

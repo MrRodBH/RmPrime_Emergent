@@ -11,6 +11,7 @@ import RedefinirSenhaPage from "@/pages/RedefinirSenhaPage";
 import InicioPage from "@/pages/InicioPage";
 import UsuariosPage from "@/pages/UsuariosPage";
 import ImoveisPainelPage from "@/pages/painel/ImoveisPainelPage";
+import CrmPage from "@/pages/painel/CrmPage";
 import BlogPainelPage from "@/pages/painel/BlogPainelPage";
 import ConteudoSitePage from "@/pages/painel/ConteudoSitePage";
 import LandingPagesPainelPage from "@/pages/painel/LandingPagesPainelPage";
@@ -55,6 +56,7 @@ export default function App() {
             >
               <Route index element={<InicioPage />} />
               <Route path="imoveis" element={<ImoveisPainelPage />} />
+              <Route path="crm" element={<CrmPage />} />
               <Route
                 path="usuarios"
                 element={

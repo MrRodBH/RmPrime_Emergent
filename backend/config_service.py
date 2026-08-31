@@ -11,6 +11,7 @@ CONFIG_PADRAO = {
     "round_robin_ativo": True,
     "round_robin_posicao": -1,
     "corretor_padrao_id": None,
+    "motivos_descarte": ["Sem interesse", "Sem resposta", "Fora do perfil", "Duplicado", "Dados inválidos"],
 }
 
 
