@@ -193,8 +193,13 @@ bcrypt.
 - **CORS**: origens agora vêm de FRONTEND_URL + CORS_ORIGINS (env) + domínios de
   produção rmprimeimoveis.com.br (www e raiz) — aviso do deployment_agent resolvido.
 - Deployment readiness: PASS (sem bloqueadores).
-- PENDENTE (lado do usuário): enviar print do DNS da Cloudflare para conferência;
-  executar troca de NS no Registro.br e vínculo do domínio no painel de deploy.
+- PENDENTE (lado do usuário): deploy no Emergent + vínculo do domínio; editar os
+  registros A da raiz/www na Cloudflare para o destino do Emergent.
+- Print DNS conferido (01/09/2026): zona JÁ delegada à Cloudflare (NS ativos:
+  aleena/razvan.ns.cloudflare.com) — Etapa 1 concluída. Raiz e www em A →
+  185.158.133.1 (Lovable), a trocar no deploy. Registros Resend intactos
+  (send MX/TXT SPF, contato CNAME, resend._domainkey DKIM, _dmarc). 3 TXT
+  _lovable* removíveis após migração. Guia do painel atualizado com o estado real.
 
 ## Backlog priorizado
 - **P1:** Editor visual avançado de landing pages; upload de logomarca direto em

@@ -240,11 +240,10 @@ export default function ConfiguracoesPage() {
             o mesmo roteiro serve para trocar de domínio ou adicionar um endereço novo no futuro.
           </p>
           <div className="space-y-3">
-            <p className="font-semibold text-stone-900">Etapa 1 — Ativar a zona DNS na Cloudflare</p>
+            <p className="font-semibold text-stone-900">Etapa 1 — Ativar a zona DNS na Cloudflare (já concluída em 01/09/2026)</p>
             <ol className="list-decimal space-y-2 pl-5">
-              <li>Na <strong>Cloudflare</strong> (cloudflare.com), abra a zona de <strong>rmprimeimoveis.com.br</strong> e anote os dois <strong>nameservers (NS)</strong> que ela atribui à sua conta (ficam visíveis na tela "Overview" ou no aviso do menu DNS — algo como <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">xxxx.ns.cloudflare.com</code>). Esses valores são únicos da sua conta: ninguém de fora consegue informá-los por você.</li>
-              <li>No <strong>Registro.br</strong> (registro.br → painel do domínio → "Alterar servidores DNS"), substitua os NS atuais (hoje apontando para o Lovable) pelos dois NS da Cloudflare. <strong>Sem essa troca, nenhum registro criado na Cloudflare funciona.</strong></li>
-              <li>Aguarde a propagação (minutos a algumas horas). A Cloudflare avisa por e-mail quando a zona ficar ativa.</li>
+              <li>Esta etapa já está pronta: o domínio <strong>rmprimeimoveis.com.br</strong> já responde pelos nameservers da Cloudflare (<code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">aleena.ns.cloudflare.com</code> e <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">razvan.ns.cloudflare.com</code>). Se um dia precisar refazer o processo com outro domínio: anote os dois NS que a Cloudflare atribui à zona (tela "Overview") e troque os servidores DNS no <strong>Registro.br</strong> — sem essa troca, nenhum registro da Cloudflare funciona.</li>
+              <li>Situação atual dos registros: raiz e www apontam (registro A) para o IP antigo do Lovable (185.158.133.1) — serão atualizados na Etapa 3. Os registros de e-mail do Resend (send, contato, resend._domainkey, _dmarc) <strong>não devem ser alterados</strong>.</li>
             </ol>
           </div>
           <div className="space-y-3">
@@ -258,10 +257,11 @@ export default function ConfiguracoesPage() {
           <div className="space-y-3">
             <p className="font-semibold text-stone-900">Etapa 3 — Criar os registros na Cloudflare</p>
             <ol className="list-decimal space-y-2 pl-5">
-              <li>Em <strong>DNS → Registros → Adicionar registro</strong>: se a Emergent forneceu um host, crie um <strong>CNAME</strong> com nome <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">@</code> (raiz) apontando para esse host — a Cloudflare aceita CNAME na raiz graças ao "CNAME Flattening", que já vem ativado. Se a Emergent forneceu um IP, crie um registro <strong>A</strong> com o mesmo nome <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">@</code>.</li>
-              <li>Repita para o nome <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">www</code> (mesmo destino).</li>
-              <li><strong>Proxy (nuvem laranja):</strong> mantenha ATIVADO para ganhar SSL automático, cache e proteção contra ataques. Única exceção: se a Emergent pedir explicitamente o modo "DNS only" (nuvem cinza) para emitir o próprio certificado — nesse caso, volte a ativar o proxy depois que o HTTPS estiver funcionando.</li>
+              <li>Edite os dois registros <strong>A</strong> existentes (raiz <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">@</code> e <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">www</code>, hoje apontando para o IP do Lovable): se a Emergent forneceu um host, troque o tipo para <strong>CNAME</strong> apontando para esse host — a Cloudflare aceita CNAME na raiz graças ao "CNAME Flattening", que já vem ativado. Se a Emergent forneceu um IP, apenas troque o conteúdo do registro <strong>A</strong> para o novo IP.</li>
+              <li><strong>Não altere</strong> os registros de e-mail (send, contato, resend._domainkey, _dmarc) — eles mantêm o envio de e-mails do site (Resend) funcionando.</li>
+              <li><strong>Proxy (nuvem laranja):</strong> ATIVE nos registros da raiz e do www para ganhar SSL automático, cache e proteção contra ataques. Única exceção: se a Emergent pedir explicitamente o modo "DNS only" (nuvem cinza) para emitir o próprio certificado — nesse caso, volte a ativar o proxy depois que o HTTPS estiver funcionando.</li>
               <li><strong>SSL/TLS:</strong> no menu SSL/TLS da Cloudflare, use o modo <strong>"Full (Strict)"</strong> (ou "Full", no mínimo). Nunca use "Flexible" — ele causa erro de redirecionamento em loop.</li>
+              <li>Depois que o site estiver no ar pelo domínio novo e o Lovable desativado, os três registros TXT "_lovable" podem ser apagados (limpeza opcional).</li>
             </ol>
           </div>
           <div className="space-y-3">
