@@ -42,6 +42,27 @@ const ROTULOS_ATIVIDADE: Record<string, string> = {
   email: "E-mail",
 };
 
+interface InsightsLead {
+  sentimento: string;
+  resumo: string;
+  proximos_passos: string[];
+  gerado_em: string;
+}
+
+const ESTILO_SENTIMENTO: Record<string, string> = {
+  positivo: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  neutro: "border-amber-200 bg-amber-50 text-amber-700",
+  negativo: "border-red-200 bg-red-50 text-red-700",
+  indefinido: "border-stone-200 bg-stone-100 text-stone-600",
+};
+
+const ROTULO_SENTIMENTO: Record<string, string> = {
+  positivo: "Positivo",
+  neutro: "Neutro",
+  negativo: "Negativo",
+  indefinido: "Ainda indefinido",
+};
+
 export function LeadDetalheSheet({ leadId, aoFechar, aoAtualizar, adminOuGestor }: Props) {
   const [lead, setLead] = useState<Lead | null>(null);
   const [corretores, setCorretores] = useState<Usuario[]>([]);
@@ -50,6 +71,8 @@ export function LeadDetalheSheet({ leadId, aoFechar, aoAtualizar, adminOuGestor 
   const [textoAtividade, setTextoAtividade] = useState("");
   const [enviandoAtividade, setEnviandoAtividade] = useState(false);
   const [reatribuindo, setReatribuindo] = useState(false);
+  const [insightsIa, setInsightsIa] = useState<InsightsLead | null>(null);
+  const [gerandoIa, setGerandoIa] = useState(false);
 
   const carregar = useCallback(async () => {
     if (!leadId) return;
@@ -66,6 +89,7 @@ export function LeadDetalheSheet({ leadId, aoFechar, aoAtualizar, adminOuGestor 
   useEffect(() => {
     setLead(null);
     setTextoAtividade("");
+    setInsightsIa(null);
     if (leadId) carregar();
   }, [leadId, carregar]);
 
@@ -112,6 +136,19 @@ export function LeadDetalheSheet({ leadId, aoFechar, aoAtualizar, adminOuGestor 
       toast.error(erroApi(e));
     } finally {
       setReatribuindo(false);
+    }
+  }
+
+  async function gerarInsightsIa() {
+    if (!lead) return;
+    setGerandoIa(true);
+    try {
+      const { data } = await api.get(`/ia/insights-lead/${lead.id}`);
+      setInsightsIa(data);
+    } catch (e) {
+      toast.error(erroApi(e));
+    } finally {
+      setGerandoIa(false);
     }
   }
 
@@ -262,23 +299,70 @@ export function LeadDetalheSheet({ leadId, aoFechar, aoAtualizar, adminOuGestor 
               </TabsContent>
 
               <TabsContent value="ia" className="mt-4">
-                <div className="rounded-lg border border-dashed border-stone-300 bg-white p-6" data-testid="painel-insights-ia">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-stone-400" />
-                    <p className="font-heading text-lg font-semibold text-stone-900">Insights de IA</p>
-                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Fase 6</Badge>
+                <div className="rounded-lg border border-stone-200 bg-white p-6" data-testid="painel-insights-ia">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-stone-400" />
+                      <p className="font-heading text-lg font-semibold text-stone-900">Insights de IA</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={gerarInsightsIa}
+                      disabled={gerandoIa}
+                      className="border-stone-300"
+                      data-testid="botao-gerar-insights-lead"
+                    >
+                      {gerandoIa ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analisando...
+                        </>
+                      ) : insightsIa ? (
+                        "Gerar novamente"
+                      ) : (
+                        "Gerar análise"
+                      )}
+                    </Button>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                    Aqui a inteligência artificial vai resumir o perfil do lead, indicar o sentimento da conversa
-                    (positivo, neutro ou negativo) e sugerir os próximos passos — com base nas atividades e na mensagem enviada.
-                  </p>
-                  <div className="mt-4 rounded-md bg-stone-100 p-4 text-sm text-stone-500">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">Exemplo de como ficará</p>
-                    <p className="mt-2 italic">
-                      "Lead com interesse claro em apartamento de 3 quartos na Moema e orçamento compatível.
-                      Sentimento: positivo. Sugestão: agendar visita nesta semana e apresentar 2 opções similares."
+                  {!insightsIa && !gerandoIa ? (
+                    <p className="mt-3 text-sm leading-relaxed text-stone-600">
+                      A inteligência artificial lê a mensagem do cliente e todo o histórico de atividades para
+                      resumir o momento do lead, indicar o sentimento da conversa e sugerir os próximos passos.
+                      Clique em "Gerar análise" para começar.
                     </p>
-                  </div>
+                  ) : null}
+                  {insightsIa ? (
+                    <div className="mt-4 space-y-4" data-testid="insights-lead-resultado">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-stone-500">Sentimento do cliente</span>
+                        <Badge
+                          variant="outline"
+                          className={ESTILO_SENTIMENTO[insightsIa.sentimento] || ESTILO_SENTIMENTO.indefinido}
+                          data-testid="insights-lead-sentimento"
+                        >
+                          {ROTULO_SENTIMENTO[insightsIa.sentimento] || "Ainda indefinido"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm leading-relaxed text-stone-700" data-testid="insights-lead-resumo">
+                        {insightsIa.resumo}
+                      </p>
+                      {insightsIa.proximos_passos.length > 0 ? (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Próximos passos sugeridos</p>
+                          <ul className="mt-2 space-y-2" data-testid="insights-lead-passos">
+                            {insightsIa.proximos_passos.map((passo, indice) => (
+                              <li key={indice} className="flex items-start gap-2 text-sm text-stone-700">
+                                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-stone-900" />
+                                {passo}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                      <p className="text-[11px] text-stone-400">
+                        Análise gerada por IA em {formatarData(insightsIa.gerado_em)} — confira as informações antes de agir.
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               </TabsContent>
             </Tabs>

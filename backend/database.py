@@ -145,6 +145,24 @@ VALIDADORES = {
             "atualizado_em": {"bsonType": ["date", "null"]},
         },
     },
+    "scraping_log": {
+        "bsonType": "object",
+        "required": ["banco", "sucesso", "tentativa_em"],
+        "properties": {
+            "banco": {"bsonType": "string"},
+            "sucesso": {"bsonType": "bool"},
+            "detalhe": {"bsonType": TEXTO_OU_NULO},
+            "tentativa_em": {"bsonType": "date"},
+        },
+    },
+    "cron_runs": {
+        "bsonType": "object",
+        "required": ["run_id", "criado_em"],
+        "properties": {
+            "run_id": {"bsonType": "string"},
+            "criado_em": {"bsonType": "date"},
+        },
+    },
     "posts": {
         "bsonType": "object",
         "required": ["titulo", "slug", "conteudo", "publicado", "criado_em"],
@@ -199,6 +217,8 @@ async def configurar_banco():
     await db.landing_pages.create_index("slug", unique=True)
     await db.cms_content.create_index("chave", unique=True)
     await db.bank_rates.create_index([("banco", 1), ("data_referencia", -1)])
+    await db.scraping_log.create_index([("banco", 1), ("tentativa_em", -1)])
+    await db.cron_runs.create_index("run_id", unique=True)
     await db.password_reset_tokens.create_index("expires_at", expireAfterSeconds=0)
     await db.password_reset_tokens.create_index("token_hash", unique=True)
     await db.login_attempts.create_index("identifier")

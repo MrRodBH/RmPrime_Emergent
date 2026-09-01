@@ -18,6 +18,7 @@ import ConteudoSitePage from "@/pages/painel/ConteudoSitePage";
 import LandingPagesPainelPage from "@/pages/painel/LandingPagesPainelPage";
 import ConfiguracoesPage from "@/pages/painel/ConfiguracoesPage";
 import MarketingPage from "@/pages/painel/MarketingPage";
+import TaxasPage from "@/pages/painel/TaxasPage";
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
 import ImovelDetalhePage from "@/pages/site/ImovelDetalhePage";
@@ -97,6 +98,14 @@ export default function App() {
                 element={
                   <ProtectedRoute papeis={["admin"]}>
                     <MarketingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="taxas"
+                element={
+                  <ProtectedRoute papeis={["admin", "gestor"]}>
+                    <TaxasPage />
                   </ProtectedRoute>
                 }
               />

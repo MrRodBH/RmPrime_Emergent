@@ -135,9 +135,20 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
     if (!form.descricao.trim()) return;
     setMelhorando(true);
     try {
-      const { data } = await api.post("/ia/melhorar-descricao", { texto: form.descricao });
+      const { data } = await api.post("/ia/melhorar-descricao", {
+        texto: form.descricao,
+        campos: {
+          titulo: form.titulo,
+          tipo: form.tipo,
+          finalidade: form.finalidade,
+          preco: numeroOuNulo(form.preco),
+          bairro: form.bairro,
+          cidade: form.cidade,
+          quartos: numeroOuNulo(form.quartos),
+        },
+      });
       set("descricao", data.texto_melhorado);
-      toast.success("Descrição aprimorada! (Demonstração — a IA real será conectada na Fase 6.)");
+      toast.success("Descrição aprimorada pela IA. Revise o texto antes de salvar.");
     } catch (e) {
       toast.error(erroApi(e));
     } finally {

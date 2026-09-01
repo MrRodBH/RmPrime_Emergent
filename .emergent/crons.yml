@@ -1,0 +1,7 @@
+crons:
+  - name: taxas-bancarias
+    description: "Atualiza diariamente as taxas de financiamento (CEF, Itaú, Bradesco, Inter) via scraping às 8h de Brasília"
+    cron: "0 11 * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/atualizar-taxas"
+    method: POST

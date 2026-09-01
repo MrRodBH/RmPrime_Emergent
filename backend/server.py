@@ -18,6 +18,7 @@ from routes_imoveis import router as imoveis_router
 from routes_leads import router as leads_router
 from routes_marketing import router as marketing_router
 from routes_site import router as site_router
+from routes_taxas import cron_router, router as taxas_router
 from routes_uploads import router as uploads_router
 from routes_users import router as usuarios_router
 from security import gerar_hash_senha, verificar_senha
@@ -39,6 +40,8 @@ api_router.include_router(ia_router)
 api_router.include_router(crm_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(marketing_router)
+api_router.include_router(taxas_router)
+api_router.include_router(cron_router)
 
 
 @api_router.get("/")

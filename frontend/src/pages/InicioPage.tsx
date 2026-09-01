@@ -76,6 +76,8 @@ export default function InicioPage() {
   const [corretorId, setCorretorId] = useState("");
   const [corretores, setCorretores] = useState<Usuario[]>([]);
   const [atualizando, setAtualizando] = useState(false);
+  const [insights, setInsights] = useState("");
+  const [gerandoInsights, setGerandoInsights] = useState(false);
 
   const adminOuGestor = !!usuario && (usuario.papel === "admin" || usuario.papel === "gestor");
 
@@ -106,6 +108,18 @@ export default function InicioPage() {
   }, [adminOuGestor]);
 
   if (!usuario) return null;
+
+  async function gerarInsights() {
+    setGerandoInsights(true);
+    try {
+      const { data } = await api.get("/ia/insights-dashboard", { params: { dias: Number(periodo) || 30 } });
+      setInsights(data.texto);
+    } catch (e) {
+      toast.error(erroApi(e));
+    } finally {
+      setGerandoInsights(false);
+    }
+  }
 
   const dadosVisitasPropostas = metricas
     ? [
@@ -336,27 +350,49 @@ export default function InicioPage() {
         )}
       </div>
 
-      <Card className="border-dashed border-stone-300" data-testid="bloco-insights-ia">
+      <Card className="border-stone-200" data-testid="bloco-insights-ia">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-heading text-lg">
-            <Sparkles className="h-5 w-5 text-stone-400" />
-            Insights de negócio com IA
-            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Fase 6</Badge>
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 font-heading text-lg">
+              <Sparkles className="h-5 w-5 text-stone-400" />
+              Insights de negócio com IA
+            </CardTitle>
+            <Button
+              variant="outline"
+              onClick={gerarInsights}
+              disabled={gerandoInsights}
+              className="border-stone-300"
+              data-testid="botao-gerar-insights-dashboard"
+            >
+              {gerandoInsights ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Analisando...
+                </>
+              ) : insights ? (
+                "Gerar novamente"
+              ) : (
+                "Gerar análise"
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm leading-relaxed text-stone-600">
-            Em breve, a inteligência artificial vai analisar os números do período e trazer leituras como:
-            quais etapas estão travando o funil, quais origens de lead convertem melhor e quais corretores
-            precisam de apoio — tudo em linguagem simples, com sugestões de ação.
-          </p>
-          <div className="mt-4 rounded-md bg-stone-100 p-4 text-sm text-stone-500">
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">Exemplo de como ficará</p>
-            <p className="mt-2 italic">
-              "No período, 42% dos leads pararam na etapa Conversando. As visitas agendadas pelo site converteram
-              2× mais que os demais canais. Sugestão: reforçar o retorno em até 24h para leads novos."
+          {insights ? (
+            <div className="space-y-3" data-testid="insights-dashboard-texto">
+              {insights.split("\n").filter(Boolean).map((paragrafo, i) => (
+                <p key={i} className="text-sm leading-relaxed text-stone-700">{paragrafo}</p>
+              ))}
+              <p className="text-[11px] text-stone-400">
+                Análise gerada por IA com base nos números do período selecionado ({PERIODOS.find((p) => p.valor === periodo)?.rotulo.toLowerCase()}).
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm leading-relaxed text-stone-600">
+              A inteligência artificial analisa os números do período selecionado e aponta tendências e pontos de
+              atenção em linguagem simples — por exemplo, em qual etapa o funil está travando e qual origem de lead
+              está convertendo melhor. Clique em "Gerar análise" para ver o resumo.
             </p>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

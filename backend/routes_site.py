@@ -334,17 +334,25 @@ async def lp_publica(slug: str):
 # ---------- Calculadora ----------
 
 @router.get("/calculadora/taxa")
-async def taxa_exemplo():
-    ultima = await db.bank_rates.find_one({}, sort=[("data_referencia", -1)])
-    if ultima:
+async def taxa_referencia(banco: str = "CEF", sistema: str = "SAC", modalidade: Optional[str] = None):
+    if sistema not in ("SAC", "PRICE"):
+        raise HTTPException(status_code=422, detail="Sistema inválido. Use SAC ou PRICE.")
+    filtro: dict = {"banco": banco, "sistema": sistema}
+    if banco == "CEF":
+        filtro["modalidade"] = modalidade if modalidade in ("MCMV", "SBPE") else "MCMV"
+    escolhida = await db.bank_rates.find_one({**filtro, "fonte": "manual"}, sort=[("data_referencia", -1)])
+    if not escolhida:
+        escolhida = await db.bank_rates.find_one({**filtro, "fonte": "scraping"}, sort=[("data_referencia", -1)])
+    if escolhida:
         return {
-            "taxa_aa": ultima["taxa_aa"],
-            "banco": ultima.get("banco"),
-            "sistema": ultima.get("sistema"),
-            "fonte": ultima.get("fonte", "manual"),
-            "data_referencia": ultima.get("data_referencia"),
+            "taxa_aa": escolhida["taxa_aa"],
+            "banco": escolhida.get("banco"),
+            "sistema": escolhida.get("sistema"),
+            "modalidade": escolhida.get("modalidade"),
+            "fonte": escolhida.get("fonte", "manual"),
+            "data_referencia": escolhida["data_referencia"].isoformat() if escolhida.get("data_referencia") else None,
         }
-    return {"taxa_aa": 10.0, "banco": None, "sistema": None, "fonte": "exemplo", "data_referencia": None}
+    return {"taxa_aa": 10.0, "banco": None, "sistema": None, "modalidade": None, "fonte": "exemplo", "data_referencia": None}
 
 
 # ---------- SEO ----------

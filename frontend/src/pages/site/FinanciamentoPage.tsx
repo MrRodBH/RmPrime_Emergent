@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { useSeo } from "@/hooks/useSeo";
 import { useSiteConfig } from "@/contexts/SiteConfigContext";
 import { formatarMoedaExata } from "@/lib/format";
-import { Button, Input, Label } from "@/components/ui-kit";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui-kit";
 
 interface Parcela {
   numero: number;
@@ -14,6 +14,13 @@ interface Parcela {
   saldo: number;
 }
 
+const BANCOS = [
+  { valor: "CEF", rotulo: "Caixa (CEF)" },
+  { valor: "Itaú", rotulo: "Itaú" },
+  { valor: "Bradesco", rotulo: "Bradesco" },
+  { valor: "Inter", rotulo: "Inter" },
+];
+
 export default function FinanciamentoPage() {
   const config = useSiteConfig();
   const [valorImovel, setValorImovel] = useState("500000");
@@ -21,25 +28,43 @@ export default function FinanciamentoPage() {
   const [prazoMeses, setPrazoMeses] = useState("360");
   const [taxaAA, setTaxaAA] = useState("10");
   const [fonteTaxa, setFonteTaxa] = useState("");
+  const [banco, setBanco] = useState("CEF");
+  const [modalidade, setModalidade] = useState("MCMV");
   const [sistema, setSistema] = useState<"SAC" | "PRICE">("SAC");
 
   useSeo({
     titulo: `Calculadora de financiamento SAC e PRICE | ${config.nome}`,
-    descricao: "Simule as parcelas do seu financiamento imobiliário nos sistemas SAC e PRICE e compare o total de juros.",
+    descricao: "Simule as parcelas do seu financiamento imobiliário nos sistemas SAC e PRICE com as taxas atuais dos bancos.",
   });
 
   useEffect(() => {
-    api.get("/calculadora/taxa").then((r) => {
-      if (r.data?.taxa_aa) {
-        setTaxaAA(String(r.data.taxa_aa));
-        setFonteTaxa(
-          r.data.fonte === "exemplo"
-            ? "Taxa de exemplo (as taxas reais dos bancos serão integradas em breve)."
-            : `Taxa de referência: ${r.data.banco} (${r.data.fonte}).`
-        );
-      }
-    }).catch(() => {});
-  }, []);
+    api
+      .get("/calculadora/taxa", {
+        params: { banco, sistema, modalidade: banco === "CEF" ? modalidade : undefined },
+      })
+      .then((r) => {
+        if (r.data?.taxa_aa) {
+          setTaxaAA(String(r.data.taxa_aa));
+          if (r.data.fonte === "exemplo") {
+            setFonteTaxa(
+              "Ainda não temos a taxa desta combinação — usando uma taxa de exemplo. Você pode digitar qualquer valor no campo de taxa."
+            );
+          } else {
+            const dataRef = r.data.data_referencia
+              ? new Date(r.data.data_referencia).toLocaleDateString("pt-BR")
+              : "";
+            const origem =
+              r.data.fonte === "manual"
+                ? "informada pela imobiliária"
+                : "Banco Central (atualização automática)";
+            setFonteTaxa(
+              `Taxa referente a ${dataRef} · ${r.data.banco}${r.data.modalidade ? ` (${r.data.modalidade})` : ""} · ${r.data.sistema} · fonte: ${origem}. Você pode ajustar o valor no campo de taxa.`
+            );
+          }
+        }
+      })
+      .catch(() => {});
+  }, [banco, sistema, modalidade]);
 
   const resultado = useMemo(() => {
     const valor = parseFloat(valorImovel) || 0;
@@ -88,7 +113,8 @@ export default function FinanciamentoPage() {
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-8" data-testid="pagina-financiamento">
       <h1 className="font-heading text-4xl font-bold tracking-tight text-stone-950">Calculadora de financiamento</h1>
       <p className="mt-2 max-w-2xl text-stone-600">
-        Simule as parcelas nos sistemas SAC (parcelas decrescentes) e PRICE (parcela fixa) e descubra qual cabe melhor no seu bolso.
+        Simule as parcelas nos sistemas SAC (parcelas decrescentes) e PRICE (parcela fixa) com as taxas mais recentes
+        dos bancos — e descubra qual cabe melhor no seu bolso.
       </p>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-5">
@@ -98,6 +124,37 @@ export default function FinanciamentoPage() {
             <h2 className="font-heading text-lg font-semibold text-stone-950">Dados da simulação</h2>
           </div>
           <div className="mt-6 space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Banco</Label>
+                <Select value={banco} onValueChange={setBanco}>
+                  <SelectTrigger className="h-11 border-stone-300" data-testid="calc-banco">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BANCOS.map((b) => (
+                      <SelectItem key={b.valor} value={b.valor} data-testid={`calc-banco-${b.valor.toLowerCase()}`}>
+                        {b.rotulo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {banco === "CEF" ? (
+                <div className="space-y-2">
+                  <Label>Modalidade</Label>
+                  <Select value={modalidade} onValueChange={setModalidade}>
+                    <SelectTrigger className="h-11 border-stone-300" data-testid="calc-modalidade">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MCMV" data-testid="calc-modalidade-mcmv">MCMV</SelectItem>
+                      <SelectItem value="SBPE" data-testid="calc-modalidade-sbpe">SBPE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="valor-imovel">Valor do imóvel (R$)</Label>
               <Input id="valor-imovel" type="number" min={0} value={valorImovel} onChange={(e) => setValorImovel(e.target.value)} className="h-11 border-stone-300" data-testid="calc-valor-imovel" />
@@ -208,8 +265,9 @@ export default function FinanciamentoPage() {
                 </div>
               </div>
               <p className="text-xs leading-relaxed text-stone-500">
-                Simulação apenas ilustrativa. As condições reais variam por banco, perfil de crédito e modalidade
-                (MCMV/SBPE). Fale com nossos corretores para uma análise completa.
+                Simulação apenas ilustrativa, com a taxa média divulgada pelo Banco Central para o banco e a modalidade
+                escolhidos. As condições reais variam conforme perfil de crédito e regra do banco na data da contratação.
+                Fale com nossos corretores para uma análise completa.
               </p>
             </div>
           )}

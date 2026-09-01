@@ -141,6 +141,40 @@ bcrypt.
   endpoint público sem token, criação de lead 201 com evento_id, login + tela
   Marketing renderizando com dados persistidos.
 
+## Implementado (Fase 7 — 01/09/2026): IA real + taxas reais
+- **IA via Chave Universal Emergent** (`ia_service.py`, streaming acumulado, timeout
+  60s): modelo `gemini-2.5-flash` — o flash-lite NÃO está disponível na chave
+  (erro "Invalid model name"), flash é a opção econômica mais próxima.
+- **Melhorar descrição** (POST /api/ia/melhorar-descricao): recebe texto + campos
+  estruturados (título, tipo, bairro, cidade, preço, quartos); prompt proíbe
+  inventar fatos. ImovelDialog envia os campos do formulário.
+- **Insights do lead** (GET /api/ia/insights-lead/{id}): JSON {sentimento, resumo,
+  proximos_passos} a partir de mensagem + até 30 atividades; RBAC idêntico ao CRM
+  (corretor 404 em lead alheio). Aba "Insights de IA" no drawer tem "Gerar análise".
+- **Insights do dashboard** (GET /api/ia/insights-dashboard?dias=N): compara período
+  com o anterior (volume, funil, origens, visitas/propostas/fechados), escopo do
+  corretor quando aplicável; bloco na Visão Geral com "Gerar análise".
+- **Recomendados por regra** (GET /api/imoveis/recomendados): semente = imóvel atual
+  (ou imóveis com leads recentes/destaques); score bairro+3, tipo+2, preço±20%+2,
+  quartos+1. Exibido como "Você também pode gostar" no detalhe do imóvel.
+  NÃO alimenta o carrossel da home (decisão do usuário: home = destaques).
+- **Taxas reais — Banco Central (Olinda taxaJuros/TaxasJurosMensalPorMes)**: sites
+  dos bancos bloqueiam scraping (CEF 302, Itaú 403, Inter 404), então a fonte é a
+  API oficial do BCB. Mapeamento: reguladas+TR → CEF MCMV; mercado+TR → CEF SBPE e
+  demais bancos (modalidade null); data_referencia = 1º dia do mês de referência.
+  Delete de fonte=scraping só ocorre se houver inserções (delete seguro).
+- **Resiliência**: (a) calculadora usa última taxa válida e exibe "Taxa referente a
+  dd/mm/aaaa"; (b) PUT /api/taxas/manual (admin/gestor) sobrepõe o automático;
+  (c) GET /api/taxas/status-scraping (só admin) com sucesso/falha/data por banco;
+  (d) POST /api/taxas/atualizar-agora (admin/gestor) dispara em background.
+- **Cron**: `.emergent/crons.yml` diário "0 11 * * *" UTC (8h Brasília) →
+  POST /api/cron/atualizar-taxas com Bearer WEBHOOK_CRON_SECRET (hmac.compare_digest,
+  idempotência por run_id em cron_runs, ack imediato + BackgroundTasks).
+- **Frontend**: FinanciamentoPage com seletor de banco (CEF padrão) + modalidade
+  MCMV/SBPE (só CEF) + sistema; TaxasPage (/painel/taxas, admin/gestor) com tabela
+  vigente, formulário manual, "Atualizar agora" e log de status; menu "Taxas".
+- Testes: iteration_6 — 20/20 backend + 100% frontend.
+
 ## Backlog priorizado
 - **P1:** Editor visual avançado de landing pages; upload de logomarca direto em
   Configurações (hoje via URL ou link de upload de imóvel).
@@ -153,9 +187,8 @@ bcrypt.
 
 ## Próximas tarefas
 1. Aguardar instruções do usuário (ele disse que enviará novas instruções).
-2. Backlog conhecido: IA real via Universal LLM Key (insights/sentimento no card
-   do lead, melhoria de descrição, recomendação no carrossel) e scraping real das
-   taxas dos 4 bancos (CEF/Itaú/Bradesco/Inter) para bank_rates.
+2. Backlog conhecido (P1/P2): editor visual avançado de LPs; upload de logomarca
+   direto em Configurações; auditoria de falhas de e-mail.
 
 ## Observações
 - Placeholder "SUA LOGOMARCA" (login/sidebar) é área intencional para o asset real —

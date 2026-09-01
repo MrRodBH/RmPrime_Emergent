@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { useSeo } from "@/hooks/useSeo";
 import { useSiteConfig } from "@/contexts/SiteConfigContext";
 import { FormularioLead } from "@/components/site/FormularioLead";
+import { CartaoImovel } from "@/components/site/CartaoImovel";
 import { MapaImovel } from "@/components/site/MapaImovel";
 import { formatarMoeda, rotuloFinalidade } from "@/lib/format";
 import type { Imovel } from "@/types";
@@ -20,11 +21,13 @@ export default function ImovelDetalhePage() {
   const { slug } = useParams<{ slug: string }>();
   const config = useSiteConfig();
   const [imovel, setImovel] = useState<Imovel | null>(null);
+  const [similares, setSimilares] = useState<Imovel[]>([]);
   const [naoEncontrado, setNaoEncontrado] = useState(false);
   const [fotoAtiva, setFotoAtiva] = useState(0);
 
   useEffect(() => {
     setImovel(null);
+    setSimilares([]);
     setNaoEncontrado(false);
     setFotoAtiva(0);
     api
@@ -32,6 +35,15 @@ export default function ImovelDetalhePage() {
       .then((r) => setImovel(r.data))
       .catch(() => setNaoEncontrado(true));
   }, [slug]);
+
+  const imovelId = imovel?.id;
+  useEffect(() => {
+    if (!imovelId) return;
+    api
+      .get("/imoveis/recomendados", { params: { imovel_id: imovelId } })
+      .then((r) => setSimilares(r.data.itens || []))
+      .catch(() => {});
+  }, [imovelId]);
 
   const descricaoSeo = imovel?.descricao
     ? imovel.descricao.slice(0, 155)
@@ -261,6 +273,22 @@ export default function ImovelDetalhePage() {
           </div>
         </aside>
       </div>
+
+      {similares.length > 0 ? (
+        <section className="mt-14" data-testid="secao-similares">
+          <h2 className="font-heading text-2xl font-semibold tracking-tight text-stone-900">
+            Você também pode gostar
+          </h2>
+          <p className="mt-1 text-sm text-stone-500">
+            Imóveis parecidos em localização, tipo e faixa de preço.
+          </p>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {similares.map((similar) => (
+              <CartaoImovel key={similar.id} imovel={similar} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from bson import ObjectId
@@ -122,6 +122,56 @@ async def detalhe_imovel_publico(slug: str):
                 "foto": corretor.get("foto"),
             }
     return saida
+
+
+@router.get("/recomendados")
+async def imoveis_recomendados(imovel_id: Optional[str] = None, limite: int = Query(default=6, ge=1, le=12)):
+    sementes: list[dict] = []
+    if imovel_id:
+        try:
+            base = await db.properties.find_one({"_id": ObjectId(imovel_id)})
+        except InvalidId:
+            base = None
+        if base:
+            sementes.append(base)
+    if not sementes:
+        recentes = await db.leads.find(
+            {"imovel_id": {"$ne": None}, "criado_em": {"$gte": datetime.now(timezone.utc) - timedelta(days=90)}},
+            {"imovel_id": 1},
+        ).sort("criado_em", -1).to_list(50)
+        ids = list(dict.fromkeys(l["imovel_id"] for l in recentes))[:5]
+        if ids:
+            sementes = await db.properties.find({"_id": {"$in": ids}, "status": "ativo"}).to_list(5)
+    if not sementes:
+        sementes = await db.properties.find({"status": "ativo", "destaque": True}).sort("criado_em", -1).to_list(3)
+
+    ids_semente = {s["_id"] for s in sementes}
+    candidatos = await db.properties.find({"status": "ativo", "_id": {"$nin": list(ids_semente)}}).to_list(500)
+    if not candidatos:
+        reposicao = await db.properties.find({"status": "ativo"}).sort("criado_em", -1).to_list(limite)
+        return {"itens": [imovel_para_saida(d, publico=True) for d in reposicao]}
+
+    def pontuar(candidato: dict) -> float:
+        pontos = 0.0
+        endereco = candidato.get("endereco") or {}
+        caracteristicas = candidato.get("caracteristicas") or {}
+        for semente in sementes:
+            s_end = semente.get("endereco") or {}
+            s_car = semente.get("caracteristicas") or {}
+            if endereco.get("bairro") and endereco.get("bairro") == s_end.get("bairro"):
+                pontos += 3
+            if candidato.get("tipo") == semente.get("tipo"):
+                pontos += 2
+            preco_s = semente.get("preco") or 0
+            preco_c = candidato.get("preco") or 0
+            if preco_s > 0 and preco_c > 0 and abs(preco_c - preco_s) / preco_s <= 0.2:
+                pontos += 2
+            if caracteristicas.get("quartos") is not None and caracteristicas.get("quartos") == s_car.get("quartos"):
+                pontos += 1
+        return pontos
+
+    ordenados = sorted(candidatos, key=lambda c: (-pontuar(c), -(c.get("criado_em").timestamp() if c.get("criado_em") else 0)))
+    return {"itens": [imovel_para_saida(d, publico=True) for d in ordenados[:limite]]}
 
 
 # ---------- Rotas do painel (autenticadas) ----------

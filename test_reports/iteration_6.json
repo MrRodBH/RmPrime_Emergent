@@ -1,0 +1,25 @@
+{
+  "summary": "Fase 6 (IA + calculadora + taxas + recomendados) testada ponta a ponta. 20/20 testes de backend passaram (pytest). Frontend validado com Playwright: /financiamento (Caixa/MCMV/SAC padrão, 'Taxa referente a 01/07/2026', PRICE e SAC calculam corretamente); /painel/taxas exibe 10 linhas (CEF MCMV+SBPE SAC/PRICE + Itaú/Bradesco/Inter SAC/PRICE), formulário manual, botão 'Atualizar agora' e tabela status-scraping; item 'Taxas' presente no menu do admin e AUSENTE para corretor (RBAC OK, /painel/taxas redireciona para /painel); dashboard IA gera texto (~615 chars) em PT-BR mencionando os números; aba 'Insights de IA' no drawer do lead gera sentimento/resumo/próximos passos; botão 'Melhorar com IA' no dialog de imóvel reescreve a descrição preservando os fatos; página pública de detalhe do imóvel exibe seção 'Você também pode gostar' com 5 similares. Cron endpoint valida Bearer secret e trata run_id duplicado. Taxas manuais criadas durante o teste foram removidas.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_fase6_ia_taxas.py",
+    "/app/test_reports/pytest/fase6.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ia_service.py: 'gerar_texto' faz stream mas não tem timeout explícito nem tratamento para EMERGENT_LLM_KEY ausente (KeyError). Considerar timeout/asyncio.wait_for e mensagem amigável.",
+    "routes_taxas.executar_scraping executa db.bank_rates.delete_many({fonte:'scraping'}) antes de reinserir — se a consulta do BCB retornar sucesso mas nenhum banco casar, ficamos sem qualquer taxa 'scraping' até o próximo run. Sugerido: só deletar após confirmar que há pelo menos 1 inserção bem-sucedida (ou usar upsert por chave banco/modalidade/sistema).",
+    "routes_site.taxa_referencia: quando 'sistema' inválido cai para SAC silenciosamente. Melhor retornar 422 para evitar dados enganosos ao cliente.",
+    "routes_ia.insights_lead: para corretor, se lead existir e não for dele, retorna 404 (correto em termos de vazamento). OK.",
+    "cron_router: correto usar hmac.compare_digest e enqueue via BackgroundTasks. Boa prática."
+  ],
+  "updated_files": ["/app/backend/tests/test_fase6_ia_taxas.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin rodolfovaz882@gmail.com/Admin@123, gestor gestor.teste@imobiliaria.com.br/Gestor@123, corretor corretor.teste@imobiliaria.com.br/Corretor@123, WEBHOOK_CRON_SECRET conforme .env",
+  "seed_data_creation": "Nenhum dado permanente. Uma taxa manual Inter/SAC criada para validar override e removida no teardown do teste (delete_many fonte=manual). Uma entrada em cron_runs foi criada com run_id de teste (não afeta produção).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Endpoints de listagem: leads ficam em /api/crm/leads (não /api/leads); imóveis públicos em /api/imoveis/publico. Login é POST /api/auth/login com {email, senha} e usa cookies httpOnly. UI: rota de login é /entrar. Para clicar Radix Tabs no LeadDetalheSheet dentro de <Sheet>, usar get_by_role('tab', name=...) com force=True — .evaluate(el.click()) não funciona em Radix. Fase 6 (IA/taxas/recomendados) já cobre 20 testes em /app/backend/tests/test_fase6_ia_taxas.py.",
+  "rca of the issue": "N/A — nenhum bug encontrado nesta iteração."
+}

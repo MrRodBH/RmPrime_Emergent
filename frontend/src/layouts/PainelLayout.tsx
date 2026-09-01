@@ -10,6 +10,7 @@ import {
   Megaphone,
   Menu,
   Newspaper,
+  Percent,
   Rocket,
   Settings,
   Users,
@@ -57,6 +58,7 @@ const ITENS_MENU: ItemMenu[] = [
   { rotulo: "Landing Pages", icone: Rocket, caminho: "/painel/landing-pages", papeis: ["admin", "gestor"], testid: "menu-landing-pages" },
   { rotulo: "CRM / Leads", icone: KanbanSquare, caminho: "/painel/crm", testid: "menu-crm" },
   { rotulo: "Marketing", icone: Megaphone, caminho: "/painel/marketing", papeis: ["admin"], testid: "menu-marketing" },
+  { rotulo: "Taxas", icone: Percent, caminho: "/painel/taxas", papeis: ["admin", "gestor"], testid: "menu-taxas" },
   { rotulo: "Configurações", icone: Settings, caminho: "/painel/configuracoes", papeis: ["admin", "gestor"], testid: "menu-configuracoes" },
 ];
 
