@@ -175,6 +175,27 @@ bcrypt.
   vigente, formulário manual, "Atualizar agora" e log de status; menu "Taxas".
 - Testes: iteration_6 — 20/20 backend + 100% frontend.
 
+## Implementado (Fase 7 — 01/09/2026): Publicação e domínio principal
+- **Praça Belo Horizonte/Nova Lima (MG)**: seeds reescritos (6 imóveis demo em
+  Savassi, Belvedere, Funcionários, Lourdes, Buritis e Vila da Serra/Nova Lima,
+  coordenadas e textos de BH), footer_endereco "Av. do Contorno, 1000 — BH/MG",
+  placeholders do frontend (HomePage "Ex.: Savassi", ImovelDialog "Buritis").
+  Imóveis demo antigos de SP removidos do banco e resembrados via semear_site().
+- **Guia de publicação em Configurações** (card-dominio-principal + card-dominio-lp):
+  passo a passo didático completo — Etapa 1 troca de NS no Registro.br (NS são
+  atribuídos pela Cloudflare por zona, visíveis em Overview; NS atuais estão no
+  Lovable e precisam ser trocados), Etapa 2 domínio customizado no deploy da
+  Emergent (rmprimeimoveis.com.br + www, padrão único sem www), Etapa 3 registros
+  CNAME/A na Cloudflare (CNAME flattening na raiz, proxy ativo, SSL Full Strict,
+  nunca Flexible), Etapa 4 checklist de validação (HTTPS, redirect www, /entrar,
+  /lp/slug). Seção de LP separada para subdomínio de tráfego pago (opcional).
+- **LPs permanecem em /lp/slug no domínio principal** (decisão do usuário).
+- **CORS**: origens agora vêm de FRONTEND_URL + CORS_ORIGINS (env) + domínios de
+  produção rmprimeimoveis.com.br (www e raiz) — aviso do deployment_agent resolvido.
+- Deployment readiness: PASS (sem bloqueadores).
+- PENDENTE (lado do usuário): enviar print do DNS da Cloudflare para conferência;
+  executar troca de NS no Registro.br e vínculo do domínio no painel de deploy.
+
 ## Backlog priorizado
 - **P1:** Editor visual avançado de landing pages; upload de logomarca direto em
   Configurações (hoje via URL ou link de upload de imóvel).

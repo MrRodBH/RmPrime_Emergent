@@ -93,7 +93,7 @@ export default function ConfiguracoesPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-950 sm:text-4xl">Configurações</h1>
           <p className="mt-1 max-w-2xl text-stone-600">
-            Dados da imobiliária, distribuição de leads e domínio das landing pages.
+            Dados da imobiliária, distribuição de leads e publicação do domínio.
             Para textos do site (banner, menu, rodapé, redes sociais e Política de Privacidade), use o menu{" "}
             <Link to="/painel/conteudo" className="font-medium text-stone-900 underline underline-offset-2" data-testid="link-conteudo-site">
               Conteúdo do Site
@@ -228,27 +228,75 @@ export default function ConfiguracoesPage() {
         </div>
       </div>
 
-      <Card className="border-stone-200" data-testid="card-dominio-lp">
+      <Card className="border-stone-200" data-testid="card-dominio-principal">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-heading text-lg">
-            <Cloud className="h-5 w-5 text-stone-500" /> Domínio próprio para landing pages
+            <Cloud className="h-5 w-5 text-stone-500" /> Publicar o site no domínio principal (rmprimeimoveis.com.br)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm leading-relaxed text-stone-700">
           <p>
-            Suas landing pages já funcionam no endereço deste site (ex.: <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">/lp/nome-da-oferta</code>).
-            Se quiser usar um domínio próprio como <strong>ofertas.suaimobiliaria.com.br</strong>, siga este passo a passo:
+            Este é o passo a passo completo para colocar o site no ar no domínio principal. Guarde esta página:
+            o mesmo roteiro serve para trocar de domínio ou adicionar um endereço novo no futuro.
+          </p>
+          <div className="space-y-3">
+            <p className="font-semibold text-stone-900">Etapa 1 — Ativar a zona DNS na Cloudflare</p>
+            <ol className="list-decimal space-y-2 pl-5">
+              <li>Na <strong>Cloudflare</strong> (cloudflare.com), abra a zona de <strong>rmprimeimoveis.com.br</strong> e anote os dois <strong>nameservers (NS)</strong> que ela atribui à sua conta (ficam visíveis na tela "Overview" ou no aviso do menu DNS — algo como <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">xxxx.ns.cloudflare.com</code>). Esses valores são únicos da sua conta: ninguém de fora consegue informá-los por você.</li>
+              <li>No <strong>Registro.br</strong> (registro.br → painel do domínio → "Alterar servidores DNS"), substitua os NS atuais (hoje apontando para o Lovable) pelos dois NS da Cloudflare. <strong>Sem essa troca, nenhum registro criado na Cloudflare funciona.</strong></li>
+              <li>Aguarde a propagação (minutos a algumas horas). A Cloudflare avisa por e-mail quando a zona ficar ativa.</li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-stone-900">Etapa 2 — Vincular o domínio no deploy da Emergent</p>
+            <ol className="list-decimal space-y-2 pl-5">
+              <li>Publique o projeto (botão de deploy) e, nas configurações de deploy da Emergent, abra a opção <strong>"Domínio customizado"</strong>.</li>
+              <li>Adicione <strong>rmprimeimoveis.com.br</strong> e também <strong>www.rmprimeimoveis.com.br</strong>, definindo um dos dois como endereço oficial (recomendado: a versão sem "www"; a outra vira redirecionamento — evita conteúdo duplicado no Google).</li>
+              <li>A Emergent vai informar um <strong>destino</strong>: normalmente um host para registro <strong>CNAME</strong> (ex.: <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">algo.emergent.host</code>) ou um <strong>IP</strong> para registro tipo <strong>A</strong>. Confirme qual dos dois na tela, pois pode variar.</li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-stone-900">Etapa 3 — Criar os registros na Cloudflare</p>
+            <ol className="list-decimal space-y-2 pl-5">
+              <li>Em <strong>DNS → Registros → Adicionar registro</strong>: se a Emergent forneceu um host, crie um <strong>CNAME</strong> com nome <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">@</code> (raiz) apontando para esse host — a Cloudflare aceita CNAME na raiz graças ao "CNAME Flattening", que já vem ativado. Se a Emergent forneceu um IP, crie um registro <strong>A</strong> com o mesmo nome <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">@</code>.</li>
+              <li>Repita para o nome <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">www</code> (mesmo destino).</li>
+              <li><strong>Proxy (nuvem laranja):</strong> mantenha ATIVADO para ganhar SSL automático, cache e proteção contra ataques. Única exceção: se a Emergent pedir explicitamente o modo "DNS only" (nuvem cinza) para emitir o próprio certificado — nesse caso, volte a ativar o proxy depois que o HTTPS estiver funcionando.</li>
+              <li><strong>SSL/TLS:</strong> no menu SSL/TLS da Cloudflare, use o modo <strong>"Full (Strict)"</strong> (ou "Full", no mínimo). Nunca use "Flexible" — ele causa erro de redirecionamento em loop.</li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-stone-900">Etapa 4 — Conferir se deu certo</p>
+            <ol className="list-decimal space-y-2 pl-5">
+              <li>Abra <strong>https://rmprimeimoveis.com.br</strong> e confira se o site carrega com o cadeado de segurança (sem avisos).</li>
+              <li>Abra <strong>https://www.rmprimeimoveis.com.br</strong> e confira se ele redireciona para o endereço oficial.</li>
+              <li>Teste também o painel administrativo (<strong>/entrar</strong>) e uma landing page (<strong>/lp/nome-da-pagina</strong>) pelo domínio novo.</li>
+            </ol>
+          </div>
+          <p className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-600">
+            Importante: a vinculação do domínio e o certificado HTTPS são provisionados nas configurações de deploy da
+            própria plataforma Emergent — não é algo configurado no código do site. A propagação do DNS pode levar de
+            alguns minutos até 24 horas.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-stone-200" data-testid="card-dominio-lp">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-heading text-lg">
+            <Cloud className="h-5 w-5 text-stone-500" /> Domínio próprio para landing pages (opcional)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm leading-relaxed text-stone-700">
+          <p>
+            Suas landing pages já funcionam no domínio principal (ex.: <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">rmprimeimoveis.com.br/lp/nome-da-oferta</code>).
+            Se quiser um endereço separado para campanhas de tráfego pago, como <strong>ofertas.rmprimeimoveis.com.br</strong>, siga este passo a passo:
           </p>
           <ol className="list-decimal space-y-2 pl-5">
-            <li>Crie uma conta gratuita na <strong>Cloudflare</strong> (cloudflare.com) e adicione o seu domínio, seguindo as instruções para trocar os "nameservers" no registrador (Registro.br, GoDaddy etc.).</li>
-            <li>Na Cloudflare, vá em <strong>DNS → Registros → Adicionar registro</strong> e preencha: <em>Tipo</em>: <strong>CNAME</strong>; <em>Nome</em>: <strong>ofertas</strong> (ou o subdomínio desejado); <em>Destino</em>: o endereço de deploy deste site na Emergent; <em>Proxy</em>: ativado (nuvem laranja).</li>
+            <li>Com a zona da Cloudflare já ativa (Etapa 1 acima), vá em <strong>DNS → Registros → Adicionar registro</strong> e preencha: <em>Tipo</em>: <strong>CNAME</strong>; <em>Nome</em>: <strong>ofertas</strong> (ou o subdomínio desejado); <em>Destino</em>: o endereço de deploy deste site na Emergent; <em>Proxy</em>: ativado (nuvem laranja).</li>
+            <li>Vincule o subdomínio também nas configurações de "Domínio customizado" do deploy na Emergent.</li>
             <li>Salve e aguarde a propagação — geralmente alguns minutos, podendo levar até 24 horas.</li>
             <li>Volte aqui e preencha o campo "Domínio próprio" em cada landing page (menu Landing Pages → Editar).</li>
           </ol>
-          <p className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-600">
-            Importante: o certificado de segurança (HTTPS) e a liberação do domínio são provisionados nas configurações de
-            deploy da própria plataforma Emergent — não é necessário (nem possível) fazer isso pelo código do site.
-          </p>
         </CardContent>
       </Card>
 

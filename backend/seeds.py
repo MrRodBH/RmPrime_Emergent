@@ -45,7 +45,7 @@ DEPOIMENTOS_PADRAO = "\n".join(
 )
 
 
-def _imovel(titulo, tipo, finalidade, preco, bairro, lat, lng, quartos, banheiros, vagas, area, fotos, lazer, destaque, descricao, condominio=None, iptu=None, corretor_id=None):
+def _imovel(titulo, tipo, finalidade, preco, bairro, lat, lng, quartos, banheiros, vagas, area, fotos, lazer, destaque, descricao, cidade="Belo Horizonte", condominio=None, iptu=None, corretor_id=None):
     agora = datetime.now(timezone.utc)
     return {
         "titulo": titulo,
@@ -61,8 +61,8 @@ def _imovel(titulo, tipo, finalidade, preco, bairro, lat, lng, quartos, banheiro
             "numero": "100",
             "complemento": None,
             "bairro": bairro,
-            "cidade": "São Paulo",
-            "estado": "SP",
+            "cidade": cidade,
+            "estado": "MG",
             "cep": "00000-000",
             "lat": lat,
             "lng": lng,
@@ -87,7 +87,7 @@ async def semear_site():
 
     for chave, valor in [
         ("footer_texto", FOOTER_PADRAO),
-        ("footer_endereco", "Av. Exemplo, 1000 — São Paulo/SP"),
+        ("footer_endereco", "Av. do Contorno, 1000 — Belo Horizonte/MG"),
         ("politica_privacidade", POLITICA_PADRAO),
         ("depoimentos", DEPOIMENTOS_PADRAO),
     ]:
@@ -101,52 +101,52 @@ async def semear_site():
         corretor_id = corretor["_id"] if corretor else None
         imoveis = [
             _imovel(
-                "Apartamento moderno de 3 quartos na Moema", "Apartamento", "venda", 1250000,
-                "Moema", -23.6025, -46.6648, 3, 2, 2, 98, [I1, I2, I3],
+                "Apartamento moderno de 3 quartos na Savassi", "Apartamento", "venda", 1250000,
+                "Savassi", -19.9369, -43.9340, 3, 2, 2, 98, [I1, I2, I3],
                 ["Piscina", "Academia", "Salão de festas", "Portaria 24h"], True,
                 "Apartamento amplo e iluminado, com varanda gourmet e acabamento de alto padrão. "
-                "A poucos minutos do Parque Ibirapuera, perto de metrô, escolas e comércio completo.",
+                "No coração da Savassi, perto do Pátio Savassi, escolas e comércio completo.",
                 condominio=1200, iptu=380, corretor_id=corretor_id,
             ),
             _imovel(
-                "Casa contemporânea com piscina em Perdizes", "Casa", "venda", 2890000,
-                "Perdizes", -23.5362, -46.6767, 4, 5, 3, 320, [E1, E3, I4],
+                "Casa contemporânea com piscina no Belvedere", "Casa", "venda", 2890000,
+                "Belvedere", -19.9746, -43.9467, 4, 5, 3, 320, [E1, E3, I4],
                 ["Piscina", "Churrasqueira", "Jardim", "Escritório"], True,
                 "Casa de arquitetura contemporânea com pé-direito duplo, área gourmet integrada e "
-                "piscina com deck. Bairro arborizado e tranquilo, com fácil acesso à Sumaré e Pompeia.",
+                "piscina com deck. Bairro arborizado e tranquilo, com fácil acesso à Av. Raja Gabáglia e ao BH Shopping.",
                 iptu=950, corretor_id=corretor_id,
             ),
             _imovel(
-                "Studio completo e mobiliado em Pinheiros", "Studio", "aluguel", 2800,
-                "Pinheiros", -23.5617, -46.6859, 1, 1, 1, 38, [I2, I4],
+                "Studio completo e mobiliado no Funcionários", "Studio", "aluguel", 2800,
+                "Funcionários", -19.9314, -43.9280, 1, 1, 1, 38, [I2, I4],
                 ["Academia", "Coworking", "Lavanderia", "Portaria 24h"], True,
                 "Studio mobiliado e decorado, pronto para morar. Condomínio com infraestrutura completa, "
-                "a 5 minutos da estação Fradique Coutinho.",
+                "a poucos minutos da Av. Afonso Pena e do Parque Municipal.",
                 condominio=650, iptu=90, corretor_id=corretor_id,
             ),
             _imovel(
-                "Cobertura duplex com vista panorâmica no Itaim Bibi", "Cobertura", "venda", 4500000,
-                "Itaim Bibi", -23.5868, -46.6775, 4, 4, 4, 260, [I3, I4, E4],
+                "Cobertura duplex com vista panorâmica no Lourdes", "Cobertura", "venda", 4500000,
+                "Lourdes", -19.9278, -43.9477, 4, 4, 4, 260, [I3, I4, E4],
                 ["Piscina privativa", "Terraço gourmet", "Spa", "Portaria 24h"], True,
-                "Cobertura duplex com vista definitiva, terraço com piscina privativa e quatro suítes. "
-                "Um dos endereços mais valorizados de São Paulo.",
+                "Cobertura duplex com vista definitiva para a Serra do Curral, terraço com piscina "
+                "privativa e quatro suítes. Um dos endereços mais valorizados de Belo Horizonte.",
                 condominio=3800, iptu=2100, corretor_id=corretor_id,
             ),
             _imovel(
-                "Apartamento de 2 quartos na Vila Mariana", "Apartamento", "venda", 780000,
-                "Vila Mariana", -23.5880, -46.6380, 2, 1, 1, 64, [I4, I1],
+                "Apartamento de 2 quartos no Buritis", "Apartamento", "venda", 780000,
+                "Buritis", -19.9728, -43.9616, 2, 1, 1, 64, [I4, I1],
                 ["Salão de festas", "Playground", "Portaria 24h"], False,
-                "Ótima oportunidade na Vila Mariana: apartamento funcional, andar alto, perto do metrô "
-                "Ana Rosa e da ESPM.",
+                "Ótima oportunidade no Buritis: apartamento funcional, andar alto, perto da "
+                "Av. Mario Werneck e do comércio do bairro.",
                 condominio=780, iptu=210, corretor_id=corretor_id,
             ),
             _imovel(
-                "Casa geminada com quintal em Santana", "Casa", "aluguel", 4500,
-                "Santana", -23.5027, -46.6249, 3, 2, 2, 180, [E2, E3],
+                "Casa geminada com quintal na Vila da Serra", "Casa", "aluguel", 4500,
+                "Vila da Serra", -19.9850, -43.9025, 3, 2, 2, 180, [E2, E3],
                 ["Quintal", "Churrasqueira", "Aceita pets"], False,
-                "Casa geminada ampla com quintal, ideal para famílias. Região com comércio completo e "
-                "fácil acesso ao metrô Santana.",
-                iptu=280, corretor_id=corretor_id,
+                "Casa geminada ampla com quintal, ideal para famílias. Nova Lima: região com comércio "
+                "completo e fácil acesso à BR-040 e ao centro de Belo Horizonte.",
+                cidade="Nova Lima", iptu=280, corretor_id=corretor_id,
             ),
         ]
         await db.properties.insert_many(imoveis)

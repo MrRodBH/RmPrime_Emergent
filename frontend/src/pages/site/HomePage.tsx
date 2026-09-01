@@ -92,7 +92,7 @@ export default function HomePage() {
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wide text-stone-500">Bairro</Label>
                 <Input
-                  placeholder="Ex.: Moema"
+                  placeholder="Ex.: Savassi"
                   value={bairro}
                   onChange={(e) => setBairro(e.target.value)}
                   className="h-11 border-stone-300"

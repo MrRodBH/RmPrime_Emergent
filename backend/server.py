@@ -51,13 +51,16 @@ async def raiz():
 
 app.include_router(api_router)
 
+_origens_cors = {
+    os.environ.get("FRONTEND_URL", "http://localhost:3000"),
+    *[o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()],
+    "https://rmprimeimoveis.com.br",
+    "https://www.rmprimeimoveis.com.br",
+}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        os.environ.get("FRONTEND_URL", "http://localhost:3000"),
-        "https://rmprimeimoveis.com.br",
-        "https://www.rmprimeimoveis.com.br",
-    ],
+    allow_origins=sorted(_origens_cors),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

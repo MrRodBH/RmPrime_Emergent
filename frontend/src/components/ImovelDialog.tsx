@@ -237,7 +237,7 @@ export function ImovelDialog({ aberto, aoFechar, imovel, aoSalvar }: Props) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="imovel-titulo">Título do anúncio</Label>
-                <Input id="imovel-titulo" required placeholder="Ex.: Apartamento de 3 quartos na Moema" value={form.titulo} onChange={(e) => set("titulo", e.target.value)} className="border-stone-300" data-testid="imovel-titulo" />
+                <Input id="imovel-titulo" required placeholder="Ex.: Apartamento de 3 quartos no Buritis" value={form.titulo} onChange={(e) => set("titulo", e.target.value)} className="border-stone-300" data-testid="imovel-titulo" />
                 <p className="text-xs text-stone-500">É o texto que aparece em destaque no site e no Google.</p>
               </div>
               <div className="space-y-2">
