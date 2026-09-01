@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from database import db
 from email_service import enviar_email_novo_lead
 from models_site import LeadCriar
+from routes_marketing import disparar_capi_lead
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -120,6 +121,7 @@ async def criar_lead(dados: LeadCriar, request: Request, tarefas: BackgroundTask
         "etapa_crm": "Novo",
         "motivo_descarte": None,
         "ip": ip,
+        "evento_id": dados.evento_id,
         "criado_em": agora,
     }
     resultado = await db.leads.insert_one(doc)
@@ -149,6 +151,13 @@ async def criar_lead(dados: LeadCriar, request: Request, tarefas: BackgroundTask
     if destinatarios:
         link = f"{os.environ.get('FRONTEND_URL', '').rstrip('/')}/painel/crm?lead={resultado.inserted_id}"
         tarefas.add_task(enviar_email_novo_lead, destinatarios, doc, imovel_titulo, link)
+    tarefas.add_task(
+        disparar_capi_lead,
+        doc,
+        ip,
+        request.headers.get("user-agent"),
+        request.headers.get("referer"),
+    )
 
     return {
         "mensagem": "Recebemos seu contato! Em breve um de nossos corretores falará com você."

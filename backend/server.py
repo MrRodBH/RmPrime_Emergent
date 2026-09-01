@@ -16,6 +16,7 @@ from routes_dashboard import router as dashboard_router
 from routes_ia import router as ia_router
 from routes_imoveis import router as imoveis_router
 from routes_leads import router as leads_router
+from routes_marketing import router as marketing_router
 from routes_site import router as site_router
 from routes_uploads import router as uploads_router
 from routes_users import router as usuarios_router
@@ -37,6 +38,7 @@ api_router.include_router(uploads_router)
 api_router.include_router(ia_router)
 api_router.include_router(crm_router)
 api_router.include_router(dashboard_router)
+api_router.include_router(marketing_router)
 
 
 @api_router.get("/")
@@ -48,7 +50,11 @@ app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=[
+        os.environ.get("FRONTEND_URL", "http://localhost:3000"),
+        "https://rmprimeimoveis.com.br",
+        "https://www.rmprimeimoveis.com.br",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

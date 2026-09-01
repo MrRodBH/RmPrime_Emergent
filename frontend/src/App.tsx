@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui-kit";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SiteConfigProvider } from "@/contexts/SiteConfigContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Rastreamento } from "@/components/Rastreamento";
 import { PainelLayout } from "@/layouts/PainelLayout";
 import { SiteLayout } from "@/site/SiteLayout";
 import LoginPage from "@/pages/LoginPage";
@@ -16,6 +17,7 @@ import BlogPainelPage from "@/pages/painel/BlogPainelPage";
 import ConteudoSitePage from "@/pages/painel/ConteudoSitePage";
 import LandingPagesPainelPage from "@/pages/painel/LandingPagesPainelPage";
 import ConfiguracoesPage from "@/pages/painel/ConfiguracoesPage";
+import MarketingPage from "@/pages/painel/MarketingPage";
 import HomePage from "@/pages/site/HomePage";
 import ImoveisPage from "@/pages/site/ImoveisPage";
 import ImovelDetalhePage from "@/pages/site/ImovelDetalhePage";
@@ -31,6 +33,7 @@ export default function App() {
     <BrowserRouter>
       <SiteConfigProvider>
         <AuthProvider>
+          <Rastreamento />
           <Routes>
             <Route element={<SiteLayout />}>
               <Route index element={<HomePage />} />
@@ -86,6 +89,14 @@ export default function App() {
                 element={
                   <ProtectedRoute papeis={["admin", "gestor"]}>
                     <LandingPagesPainelPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="marketing"
+                element={
+                  <ProtectedRoute papeis={["admin"]}>
+                    <MarketingPage />
                   </ProtectedRoute>
                 }
               />

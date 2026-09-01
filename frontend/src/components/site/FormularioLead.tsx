@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { api, erroApi } from "@/lib/api";
+import { gerarEventoId, rastrearLead } from "@/lib/tracking";
 import { Button, Input, Label, Textarea } from "@/components/ui-kit";
 
 interface Props {
@@ -19,6 +20,7 @@ export function FormularioLead({ origem, imovelId, titulo, textoBotao, mensagemP
   const [mensagem, setMensagem] = useState(mensagemPadrao || "");
   const [dataVisita, setDataVisita] = useState("");
   const [consentimento, setConsentimento] = useState(false);
+  const [eventoId, setEventoId] = useState(() => gerarEventoId());
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
@@ -43,7 +45,10 @@ export function FormularioLead({ origem, imovelId, titulo, textoBotao, mensagemP
         imovel_id: imovelId || null,
         consentimento_lgpd: consentimento,
         data_visita: origem === "agendamento" ? dataVisita || null : null,
+        evento_id: eventoId,
       });
+      rastrearLead(eventoId, origem);
+      setEventoId(gerarEventoId());
       setEnviado(true);
     } catch (e) {
       setErro(erroApi(e));

@@ -123,6 +123,24 @@ bcrypt.
 - Testes: 13/13 backend + 100% frontend (iteration_5); tooltip do gráfico tornado
   robusto a rótulos não-ISO e limite do MVP documentado no endpoint.
 
+## Implementado (Fase 6 — 01/09/2026)
+- **Marketing e Rastreamento** (/painel/marketing, só admin): Meta Pixel ID, token
+  CAPI (campo senha), Google Tag ID, scripts customizados de cabeçalho/rodapé —
+  tudo com instruções didáticas passo a passo em PT-BR e badges "Configurado".
+- Backend `routes_marketing.py`: GET/PUT /api/marketing/config (só admin),
+  GET /api/marketing/publico (nunca expõe o token CAPI), `disparar_capi_lead`
+  (evento "Lead" na Graph API v21.0 com e-mail/telefone SHA-256, IP, user-agent).
+- Deduplicação Pixel/CAPI: FormularioLead gera `evento_id` (UUID) por envio, dispara
+  fbq("track","Lead",...,{eventID}) e envia o mesmo ID no POST /api/leads; backend
+  grava `evento_id` no lead e o CAPI usa o mesmo `event_id` (BackgroundTask).
+- Frontend `lib/tracking.ts` + `components/Rastreamento.tsx` (montado no App):
+  injeta Pixel, gtag.js e scripts customizados; pageviews por rota (SPA); cliques
+  em wa.me/tel:/mailto: viram evento "Contact"/"contact".
+- Correções de compilação TS em tracking.ts (tipagem do stub fbq e textContent
+  nullable). Testes manuais aprovados: RBAC (corretor 403), salvar/ler config,
+  endpoint público sem token, criação de lead 201 com evento_id, login + tela
+  Marketing renderizando com dados persistidos.
+
 ## Backlog priorizado
 - **P1:** Editor visual avançado de landing pages; upload de logomarca direto em
   Configurações (hoje via URL ou link de upload de imóvel).
@@ -134,10 +152,10 @@ bcrypt.
   4 bancos (CEF/Itaú/Bradesco/Inter).
 
 ## Próximas tarefas
-1. Dashboard com Recharts (funil, origem dos leads, produtividade por corretor).
-2. Integrações de marketing: Meta Pixel/CAPI e Google Ads (marketing_config).
-3. Fase 6: IA (insights de lead, melhoria de descrição, recomendações) e scraping
-   de bank_rates.
+1. Aguardar instruções do usuário (ele disse que enviará novas instruções).
+2. Backlog conhecido: IA real via Universal LLM Key (insights/sentimento no card
+   do lead, melhoria de descrição, recomendação no carrossel) e scraping real das
+   taxas dos 4 bancos (CEF/Itaú/Bradesco/Inter) para bank_rates.
 
 ## Observações
 - Placeholder "SUA LOGOMARCA" (login/sidebar) é área intencional para o asset real —

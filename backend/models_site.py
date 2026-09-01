@@ -73,6 +73,7 @@ class LeadCriar(BaseModel):
     imovel_id: Optional[str] = None
     consentimento_lgpd: bool
     data_visita: Optional[str] = None
+    evento_id: Optional[str] = Field(default=None, max_length=64)
 
 
 class PostCriar(BaseModel):
